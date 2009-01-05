@@ -7,11 +7,54 @@
   </head>
   <body>
   
-    <h1>Ohai</h1>
+    <h1>SUPER DISCO BREAKING</h1>
 
-    <p>
-      <a href="http://github.com/toretore">Here</a>
+    <p id="warning">
+      <a href="#">I'm not epileptic</a>
     </p>
+
+    <p id="link">
+      <a href="http://github.com/toretore">code making</a>
+    </p>
+
+    <script type="text/javascript">
+      (function(body){
+
+        var hex = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
+
+        function rH(){
+          return hex[Math.floor(Math.random()*hex.length)];
+        };
+
+        function randomColor(){
+          return '#'+rH()+rH()+rH()+rH()+rH()+rH();
+        };
+
+        var warning = document.getElementById('warning'),
+           link = document.getElementById('link');
+      
+        var doit = true,
+            timeout;
+
+        link.style.display = "none";
+        warning.onclick = function(){
+          warning.style.display = "none";
+          link.style.display = "block";
+          body.onmousemove = function(){
+            if (doit) {
+              body.style.backgroundColor = randomColor();
+              doit = false;
+              timeout = null;
+            } else if (!timeout) {
+              timeout = setTimeout(function(){
+                doit = true;
+              }, 100);
+            }
+          };
+        };
+
+      })(document.getElementsByTagName('html')[0]);
+    </script>
 
   </body>
 </html>
