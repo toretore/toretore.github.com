@@ -42,3 +42,5 @@ body {
         text-decoration: none; }
     #container #content p {
       margin: 1em 0; }
+    #container #content .post {
+      margin: 3em 0; }
