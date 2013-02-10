@@ -522,3 +522,5 @@ with two sockets:
 
     alice.say('hey bob');
     bob.say('hiya there alice');
+
+[View entire WS handler on Gist](https://gist.github.com/toretore/35eb74a2cac3f214fd4b#file-websockets_handler-rb)
