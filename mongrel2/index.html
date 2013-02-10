@@ -10,8 +10,8 @@
   <body>
     <div id="main">
       <ul id="menu">
-        <!-- <li class="current"><a href="/articles/">Articles</a></li>
-        <li><a href="/posts/">Posts</a></li> -->
+        <li class="current"><a href="/articles/">Articles</a></li>
+        <!-- <li><a href="/posts/">Posts</a></li> -->
       </ul>
       <div id="content">
         <h1 id="exploring-mongrel2-handlers-with-ruby">Exploring Mongrel2 handlers with Ruby</h1>
@@ -35,6 +35,7 @@ brew install mongrel2
   <li>eventmachine</li>
   <li>em-zeromq</li>
   <li>json</li>
+  <li>em-websocket</li>
 </ul>
 
 <p>You don’t have to use EventMachine, there are <a href="http://www.zeromq.org/bindings:ruby">zmq</a> and
@@ -101,6 +102,8 @@ main = Server(
 
 servers = [main]
 </code></pre>
+
+<p><a href="https://gist.github.com/toretore/35eb74a2cac3f214fd4b#file-mongrel2_config-py">View file on Gist</a></p>
 
 <p>Then load the configuration into SQLite with:</p>
 
@@ -230,7 +233,7 @@ end
 the request headers and the second is the HTTP body (possibly an empty string). We can now
 extend our description of the request message to include the netstrings:</p>
 
-<pre><code>[UUID] [Request ID] [Path] [Netstring - HTTP headers as JSON],[HTTP body],
+<pre><code>[UUID] [Request ID] [Path] [Netstring - HTTP headers as JSON],[Netstring - HTTP body],
 </code></pre>
 
 <p>Send the request again:</p>
@@ -274,6 +277,8 @@ Content-Length: 16
 
 Hello, Mongrel2!
 </code></pre>
+
+<p><a href="https://gist.github.com/toretore/35eb74a2cac3f214fd4b#file-simple_handler-rb">View entire handler on Gist</a></p>
 
 <h2 id="server-sent-eventseventsource">Server-Sent Events/EventSource</h2>
 <p>If you look closely at the response message definition above, you’ll see that I used plural
@@ -405,18 +410,20 @@ clients are listening, Mongrel2 discards them. Actually, we’ll be sending inva
 since they won’t have any client IDs. It would be polite to simply not send it to Mongrel2 if the clients
 array is empty.</p>
 
+<p><a href="https://gist.github.com/toretore/35eb74a2cac3f214fd4b#file-sse_handler-rb">View the entire SSE handler on Gist</a></p>
+
 <h2 id="websockets">WebSockets</h2>
 <p>Server-Sent Events are great. But they do have one limitation - they’re one way only, a client can’t send
 messages back to the server. WebSockets is an alternative protocol for two-way communication. It’s a
 little more involved than SSE, and getting it to work through Mongrel2 isn’t straight forward.</p>
 
-<p>Mongrel2 supports WebSockets. Kind of. WebSockets isn’t build with HTTP: It pretends to be an HTTP
+<p>Mongrel2 supports WebSockets. Kind of. WebSockets isn’t built with HTTP: It pretends to be an HTTP
 connection at first, which is then “upgraded” to WebSockets. There are many different versions of
 the WebSockets specification, and Mongrel2 only supports the latest, version 13. Mongrel2 will
-take care of the initial setup of the connection and the WebSockets handshake which “upgrades” the
-HTTP connection to WebSockets. It will also decode incoming messages for you, but when you want
+take care of (some of) the initial setup of the connection and the WebSockets handshake which upgrades
+the HTTP connection to WebSockets. It will also decode incoming messages for you, but when you want
 to send something back you have to take care of it yourself. This is also how it supports HTTP, but
-for this article I don’t want to get into parsing WebSocket frames so we’re going to hack something
+for this article I don’t want to get into creating WebSocket frames so we’re going to hack something
 in place which will take care of it for us. <a href="https://github.com/igrigorik/em-websocket">em-websocket</a>
 is a WebSockets implementation for EventMachine, and you can easily start a WS server using it. But
 we want to go through Mongrel2, so we’re going to shoehorn it into our Handler.</p>
@@ -435,8 +442,6 @@ end
 </code></pre>
 
 <p>I said it’s a hack, remember?</p>
-
-<p>(Note that the <code>clients</code> array has been replaced with a hash)</p>
 
 <p>Mongrel2 will detect an incoming WebSockets (v13) connection and set the <code>METHOD</code> header to
 <code>WEBSOCKET_HANDSHAKE</code>. This is the initial connection where HTTP is upgraded to WebSockets. We’re
@@ -465,7 +470,7 @@ socket.send('Hello Mongrel2 from a WebSocket!');
 <pre><code>#...
 elsif headers['METHOD'] == 'WEBSOCKET'
   puts "Received WS message: #{body}"
-  clients[id][:websocket]send('Hello yourself, browser!')
+  clients[id][:websocket].send('Hello yourself, browser!')
 end
 </code></pre>
 
@@ -491,6 +496,7 @@ Sec-WebSocket-Accept: cqPlq0VWCRTVSpdkbcqHUeWNhU8=
 
 <p>After this you’ll see how it’s switched to WebSockets’ binary protocol.</p>
 
+<h2 id="chat-obligatoire">Chat obligatoire</h2>
 <p>No asynchronous messaging article would be complete without the ubiquitous chat example. We’ll keep
 it simple and only implement a simple JSON protocol without any real UI. Now that we have the WebSocket
 up and running we can just alter the code slightly to show how it can be used for communication among
@@ -521,7 +527,7 @@ end
 
 <p>The handshake part is still the same. Our JSON protocol uses a <code>type</code> attribute to signify what kind
 of message we’re dealing with; one <code>join</code> message with a <code>name</code> attribute and a <code>message</code> message
-with a (you guessed it) <code>message</code> attribute. Our response handler distributes each message among its
+with a (you guessed it) <code>message</code> and a <code>name</code> attribute. Our response handler distributes each message among its
 connected clients, who choose what action to take. You can initiate a chat using the browser console
 with two sockets:</p>
 
@@ -543,8 +549,6 @@ var alice = client('alice'),
 alice.say('hey bob');
 bob.say('hiya there alice');
 </code></pre>
-
-<p>Slutt.</p>
 
       </div>
     </div>
