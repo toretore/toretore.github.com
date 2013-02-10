@@ -23,6 +23,7 @@ I'm going to be using EventMachine on Ruby 1.9 in this article, with the followi
 * eventmachine
 * em-zeromq
 * json
+* em-websocket
 
 You don't have to use EventMachine, there are [zmq](http://www.zeromq.org/bindings:ruby) and
 [ffi-rzmq](http://www.zeromq.org/bindings:ruby-ffi) gems, and swapping out the EM parts should
@@ -92,6 +93,8 @@ to make the configuration programmable. For now, you can just copy this into a f
     )
 
     servers = [main]
+
+[View file on Gist](https://gist.github.com/toretore/35eb74a2cac3f214fd4b#file-mongrel2_config-py)
 
 Then load the configuration into SQLite with:
 
@@ -212,7 +215,7 @@ As you can see, there are two netstrings in a request. The first is a JSON repre
 the request headers and the second is the HTTP body (possibly an empty string). We can now
 extend our description of the request message to include the netstrings:
 
-    [UUID] [Request ID] [Path] [Netstring - HTTP headers as JSON],[HTTP body],
+    [UUID] [Request ID] [Path] [Netstring - HTTP headers as JSON],[Netstring - HTTP body],
 
 Send the request again:
 
@@ -254,6 +257,8 @@ not seeing it hang as it's waiting for a response that never arrives:
     Content-Length: 16
 
     Hello, Mongrel2!
+
+[View entire handler on Gist](https://gist.github.com/toretore/35eb74a2cac3f214fd4b#file-simple_handler-rb)
 
 
 Server-Sent Events/EventSource
@@ -378,6 +383,8 @@ clients are listening, Mongrel2 discards them. Actually, we'll be sending invali
 since they won't have any client IDs. It would be polite to simply not send it to Mongrel2 if the clients
 array is empty.
 
+[View the entire SSE handler on Gist](https://gist.github.com/toretore/35eb74a2cac3f214fd4b#file-sse_handler-rb)
+
 
 WebSockets
 ---
@@ -386,13 +393,13 @@ Server-Sent Events are great. But they do have one limitation - they're one way 
 messages back to the server. WebSockets is an alternative protocol for two-way communication. It's a
 little more involved than SSE, and getting it to work through Mongrel2 isn't straight forward.
 
-Mongrel2 supports WebSockets. Kind of. WebSockets isn't build with HTTP: It pretends to be an HTTP
+Mongrel2 supports WebSockets. Kind of. WebSockets isn't built with HTTP: It pretends to be an HTTP
 connection at first, which is then "upgraded" to WebSockets. There are many different versions of
 the WebSockets specification, and Mongrel2 only supports the latest, version 13. Mongrel2 will
-take care of the initial setup of the connection and the WebSockets handshake which "upgrades" the
-HTTP connection to WebSockets. It will also decode incoming messages for you, but when you want
+take care of (some of) the initial setup of the connection and the WebSockets handshake which upgrades
+the HTTP connection to WebSockets. It will also decode incoming messages for you, but when you want
 to send something back you have to take care of it yourself. This is also how it supports HTTP, but
-for this article I don't want to get into parsing WebSocket frames so we're going to hack something
+for this article I don't want to get into creating WebSocket frames so we're going to hack something
 in place which will take care of it for us. [em-websocket](https://github.com/igrigorik/em-websocket)
 is a WebSockets implementation for EventMachine, and you can easily start a WS server using it. But
 we want to go through Mongrel2, so we're going to shoehorn it into our Handler.
@@ -410,8 +417,6 @@ Let's replace the request handling code once again with this:
     end
 
 I said it's a hack, remember?
-
-(Note that the `clients` array has been replaced with a hash)
 
 Mongrel2 will detect an incoming WebSockets (v13) connection and set the `METHOD` header to
 `WEBSOCKET_HANDSHAKE`. This is the initial connection where HTTP is upgraded to WebSockets. We're
@@ -439,7 +444,7 @@ To send something back:
     #...
     elsif headers['METHOD'] == 'WEBSOCKET'
       puts "Received WS message: #{body}"
-      clients[id][:websocket]send('Hello yourself, browser!')
+      clients[id][:websocket].send('Hello yourself, browser!')
     end
 
 If you spy on the TCP port while creating the WebSocket on the client, you'll see the "HTTP"
@@ -462,6 +467,10 @@ handshake:
     Sec-WebSocket-Accept: cqPlq0VWCRTVSpdkbcqHUeWNhU8=
 
 After this you'll see how it's switched to WebSockets' binary protocol.
+
+
+Chat obligatoire
+---
 
 No asynchronous messaging article would be complete without the ubiquitous chat example. We'll keep
 it simple and only implement a simple JSON protocol without any real UI. Now that we have the WebSocket
@@ -492,7 +501,7 @@ several peers through a central server (our handler).
 
 The handshake part is still the same. Our JSON protocol uses a `type` attribute to signify what kind
 of message we're dealing with; one `join` message with a `name` attribute and a `message` message
-with a (you guessed it) `message` attribute. Our response handler distributes each message among its
+with a (you guessed it) `message` and a `name` attribute. Our response handler distributes each message among its
 connected clients, who choose what action to take. You can initiate a chat using the browser console
 with two sockets:
 
@@ -513,5 +522,3 @@ with two sockets:
 
     alice.say('hey bob');
     bob.say('hiya there alice');
-
-Slutt.
