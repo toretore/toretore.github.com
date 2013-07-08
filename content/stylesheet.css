@@ -1,3 +1,5 @@
+@import url(http://fonts.googleapis.com/css?family=Raleway:700,400&subset=latin,latin-ext);
+
 * {
   margin: 0;
   padding: 0;
@@ -7,7 +9,7 @@
 
 body {
   background: #fff;
-  font-size: 90%;
+  font-size: 80%;
   padding: 1em;
 }
 
@@ -51,34 +53,51 @@ body {
 
   #content h2 {
     font-size: 110%;
-    margin: 2em 0 1em 0;
+    margin: 3em 0 1em 0;
   }
 
   #content h3 {
     font-size: 100%;
-    margin: 2em 0 1em 0;
+    margin: 3em 0 1em 0;
   }
 
   #content p {
-    margin: 1em 0;
+    margin: 1.5em 0;
+    line-height: 1.3em;
   }
 
-  #content p code {
-    background: #eee;
-    padding: 0 0.3em;
+    #content p.image {
+    }
+
+      #content p.image img {
+      }
+
+  #content code {
+    background: #000;
+    color: #fff;
+    padding: 0.2em 0.3em;
+    font-size: 90%;
   }
 
   #content pre {
-    margin: 1em 0;
+    margin: 3em 0.5em;
     padding: 0.5em;
-    background: #eee;
+    background: #000;
+    color: #fff;
   }
 
   #content pre code {
     display: block;
     font-family: monospace;
+    line-height: 1.2em;
   }
 
   #content ul {
-    list-style-position: inside;
+    list-style-position: outside;
+    margin: 2em 1em;
   }
+
+    #content ul li {
+      margin: 0.5em 0;
+    line-height: 1.2em;
+    }

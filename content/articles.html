@@ -1,3 +1,3 @@
-<% for item in @site.items.select{|i| i.identifier =~ /\A\/articles\/.+\Z/ } %>
+<% for item in @site.items.select{|i| i.identifier =~ /\A\/articles\/.+\Z/ && i[:published] } %>
   [<%= item[:title] %>](/<%= item.identifier[/([^\/]+)\/$/, 1] %>/)
 <% end %>

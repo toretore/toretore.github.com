@@ -1,6 +1,7 @@
 ---
 title: Exploring Mongrel2 handlers with Ruby
 date: 2013-02-10
+published: true
 ---
 
 Unlike the original Mongrel, which was written in Ruby, for Ruby, Mongrel2 uses ZeroMQ
