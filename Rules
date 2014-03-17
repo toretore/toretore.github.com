@@ -13,29 +13,33 @@
 #   item, use the pattern “/about/*/”; “/about/*” will also select the parent,
 #   because “*” matches zero or more characters.
 
-compile '/stylesheet/' do
-  # don’t filter or layout
+compile '/stylesheets/*' do
+  filter :sass
+end
+
+route '/stylesheets/*' do
+  "/stylesheets/#{item.identifier.split('/').last}.css"
 end
 
 compile '/' do
-  filter :kramdown
+  filter :krimdown
   layout 'default'
 end
 
 compile /\/articles\/$/ do
   filter :erb
-  filter :kramdown
+  filter :krimdown
   layout 'default'
 end
 
 compile '/articles/*' do
   layout 'article'
-  filter :kramdown
+  filter :krimdown
   layout 'default'
 end
 
 compile '/posts/*' do
-  filter :kramdown
+  filter :krimdown
   layout 'default'
 end
 
@@ -46,10 +50,6 @@ compile '*' do
     filter :erb
     layout 'default'
   end
-end
-
-route '/stylesheet/' do
-  '/style.css'
 end
 
 route '/articles' do

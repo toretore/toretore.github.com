@@ -16,8 +16,10 @@ Prerequisites
 
 You'll need to install ZeroMQ and Mongrel2. If you're using Homebrew, you can simply
 
-    brew install zeromq
-    brew install mongrel2
+~~~
+brew install zeromq
+brew install mongrel2
+~~~
 
 I'm going to be using EventMachine on Ruby 1.9 in this article, with the following gems:
 
@@ -38,17 +40,19 @@ sending requests from the server to the handler, and another pair for sending re
 the handler to the server.
 
 
-    +-------------------+              +--------------------+
-    |      Server       |              |       Handler      |
-    |                   |              |                    |
-    | +--------------+  |              |  +--------------+  |
-    | |    [PUSH]    |--|-- Request ---|->|    [PULL]    |  |
-    | +--------------+  |              |  +--------------+  |
-    |                   |              |                    |
-    | +--------------+  |              |  +--------------+  |
-    | |    [SUB]     |<-|-- Response --|--|    [PUB]     |  |
-    | +--------------+  |              |  +--------------+  |
-    +-------------------+              +--------------------+
+~~~
++-------------------+              +--------------------+
+|      Server       |              |       Handler      |
+|                   |              |                    |
+| +--------------+  |              |  +--------------+  |
+| |    [PUSH]    |--|-- Request ---|->|    [PULL]    |  |
+| +--------------+  |              |  +--------------+  |
+|                   |              |                    |
+| +--------------+  |              |  +--------------+  |
+| |    [SUB]     |<-|-- Response --|--|    [PUB]     |  |
+| +--------------+  |              |  +--------------+  |
++-------------------+              +--------------------+
+~~~
 
 The server uses a PUSH socket to publish requests, that will be picked up by one of the handlers
 listening with a PULL socket on the other end. When the handler is done processing the request,
@@ -70,43 +74,49 @@ Before we can start writing the handler, we need to set up Mongrel2. Mongrel2 us
 database for its configuration, which can seem a little strange, but the reason behind it is
 to make the configuration programmable. For now, you can just copy this into a file:
 
-    handler = Handler(
-      send_spec = "tcp://*:9999",
-      send_ident = "7B0A2BF9-0DB2-4FEB-AD90-75C649B859FC",
-      recv_spec = "tcp://*:9998",
-      recv_ident = ""
-    )
+~~~python
+handler = Handler(
+  send_spec = "tcp://*:9999",
+  send_ident = "7B0A2BF9-0DB2-4FEB-AD90-75C649B859FC",
+  recv_spec = "tcp://*:9998",
+  recv_ident = ""
+)
 
-    main = Server(
-        uuid="242DABD4-D5BE-4D16-A042-D4985C8095BD",
-        access_log="/logs/access.log",
-        error_log="/logs/error.log",
-        chroot="./",
-        default_host="localhost",
-        name="test",
-        pid_file="/run/mongrel2.pid",
-        port=6767,
-        hosts = [
-            Host(name="localhost", routes={
-                "/": handler
-            })
-        ]
-    )
+main = Server(
+    uuid="242DABD4-D5BE-4D16-A042-D4985C8095BD",
+    access_log="/logs/access.log",
+    error_log="/logs/error.log",
+    chroot="./",
+    default_host="localhost",
+    name="test",
+    pid_file="/run/mongrel2.pid",
+    port=6767,
+    hosts = [
+        Host(name="localhost", routes={
+            "/": handler
+        })
+    ]
+)
 
-    servers = [main]
+servers = [main]
+~~~
 
 [View file on Gist](https://gist.github.com/toretore/35eb74a2cac3f214fd4b#file-mongrel2_config-py)
 
 Then load the configuration into SQLite with:
 
-    m2sh load -config filename
+~~~
+m2sh load -config filename
+~~~
 
 This sets up an HTTP server running on localhost:6767, using a handler which receives requests
 on tcp://\*:9999 and sends responses on tcp://\*:9998.
 
 Start the server:
 
-    m2sh start -name test
+~~~
+m2sh start -name test
+~~~
 
 If you want to know more about Mongrel2's overall structure and configuration, the
 [guide](http://mongrel2.org/manual/book-finalch4.html#x6-210003) covers that.
@@ -118,25 +128,27 @@ Getting to know Mongrel2
 Ok, let's get to some code. We'll start by creating the handler's PULL and PUB sockets, connecting
 them to the TCP ports from the config.
 
-    require 'eventmachine'
-    require 'em-zeromq'
-    require 'json'
-    require 'securerandom'
+~~~ruby
+require 'eventmachine'
+require 'em-zeromq'
+require 'json'
+require 'securerandom'
 
-    EM.run do
+EM.run do
 
-      context = EM::ZeroMQ::Context.new(1)
+  context = EM::ZeroMQ::Context.new(1)
 
-      requests = context.socket(ZMQ::PULL)
-      requests.connect('tcp://127.0.0.1:9999')
+  requests = context.socket(ZMQ::PULL)
+  requests.connect('tcp://127.0.0.1:9999')
 
-      responses = context.socket(ZMQ::PUB)
-      responses.connect('tcp://127.0.0.1:9998')
-      responses.setsockopt(ZMQ::IDENTITY, SecureRandom.uuid)
+  responses = context.socket(ZMQ::PUB)
+  responses.connect('tcp://127.0.0.1:9998')
+  responses.setsockopt(ZMQ::IDENTITY, SecureRandom.uuid)
 
-      # The rest of the handler's code goes here
+  # The rest of the handler's code goes here
 
-    end#EM.run
+end#EM.run
+~~~
 
 Now we're listening for messages on our PULL socket and we have a PUB socket on which we
 can send responses. I'm not going to include this code in the examples that follow, just
@@ -144,23 +156,31 @@ assume that the code goes where the comment says above.
 
 First, let's just see what Mongrel2 is sending to our PULL socket.
 
-    requests.on :message do |message|
-      puts message.copy_out_string
-    end
+~~~ruby
+requests.on :message do |message|
+  puts message.copy_out_string
+end
+~~~
 
 We're just printing whatever is getting sent to STDOUT. Start the program,
 
-    ruby handler.rb
+~~~
+ruby handler.rb
+~~~
 
 and send Mongrel2 a request using curl or similar:
 
-    curl http://localhost:6767/
+~~~
+curl http://localhost:6767/
+~~~
 
 (Your curl will just hang because we're not sending a response yet, just Ctrl-C it)
 
 And you'll see something like this printed out from the handler process:
 
-    7B0A2BF9-0DB2-4FEB-AD90-75C649B859FC 4 / 238:{"PATH":"/","x-forwarded-for":"127.0.0.1","accept":"*/*","user-agent":"curl/7.21.4 (universal-apple-darwin11.0) libcurl/7.21.4 OpenSSL/0.9.8r zlib/1.2.5","host":"localhost:6767","METHOD":"GET","VERSION":"HTTP/1.1","URI":"/","PATTERN":"/"},0:,
+~~~
+7B0A2BF9-0DB2-4FEB-AD90-75C649B859FC 4 / 238:{"PATH":"/","x-forwarded-for":"127.0.0.1","accept":"*/*","user-agent":"curl/7.21.4 (universal-apple-darwin11.0) libcurl/7.21.4 OpenSSL/0.9.8r zlib/1.2.5","host":"localhost:6767","METHOD":"GET","VERSION":"HTTP/1.1","URI":"/","PATTERN":"/"},0:,
+~~~
 
 Well, that's kinda weird. Some of it is obviously JSON, but what about the rest of it?
 If you look at the UUID at the start of the message, you'll see that it's the same one
@@ -170,13 +190,17 @@ send the response to, and after that is the path the client requested. Everythin
 that is encoded as [netstrings](http://cr.yp.to/proto/netstrings.txt). So, each request
 uses this pattern:
 
-    [UUID] [Request ID] [Path] [Netstrings]
+~~~
+[UUID] [Request ID] [Path] [Netstrings]
+~~~
 
 That is, four parts separated by spaces. That should be pretty easy to parse:
 
-    requests.on :message do |msg|
-      p msg.copy_out_string.split(' ', 4) #Limit to 4 items, i.e. stop when we get to the netstrings
-    end
+~~~ruby
+requests.on :message do |msg|
+  p msg.copy_out_string.split(' ', 4) #Limit to 4 items, i.e. stop when we get to the netstrings
+end
+~~~
 
 Send it another request:
 
@@ -184,7 +208,9 @@ Send it another request:
 
 And the handler prints:
 
-    ["7B0A2BF9-0DB2-4FEB-AD90-75C649B859FC", "2", "/foo", "244:{\"PATH\":\"/foo\",\"x-forwarded-for\":\"127.0.0.1\",\"accept\":\"*/*\",\"user-agent\":\"curl/7.21.4 (universal-apple-darwin11.0) libcurl/7.21.4 OpenSSL/0.9.8r zlib/1.2.5\",\"host\":\"localhost:6767\",\"METHOD\":\"GET\",\"VERSION\":\"HTTP/1.1\",\"URI\":\"/foo\",\"PATTERN\":\"/\"},0:,"]
+~~~
+["7B0A2BF9-0DB2-4FEB-AD90-75C649B859FC", "2", "/foo", "244:{\"PATH\":\"/foo\",\"x-forwarded-for\":\"127.0.0.1\",\"accept\":\"*/*\",\"user-agent\":\"curl/7.21.4 (universal-apple-darwin11.0) libcurl/7.21.4 OpenSSL/0.9.8r zlib/1.2.5\",\"host\":\"localhost:6767\",\"METHOD\":\"GET\",\"VERSION\":\"HTTP/1.1\",\"URI\":\"/foo\",\"PATTERN\":\"/\"},0:,"]
+~~~
 
 You might be thinking, "Well, this is obviously broken, what if the path has spaces in it?".
 Well, Mongrel2 has solved this problem by decreeing that *paths may not have spaces in them*. It
@@ -194,23 +220,25 @@ So, now we have the UUID, the request ID, the path and the netstrings. Netstring
 very simple (a number telling us how many bytes in the string, a colon,then the string,
 and a comma), so we'll just write a quick and dirty parser:
 
-    requests.on :message do |msg|
-      uuid, id, path, rest =  msg.copy_out_string.split(' ', 4)
+~~~ruby
+requests.on :message do |msg|
+  uuid, id, path, rest =  msg.copy_out_string.split(' ', 4)
 
-      netstrings = []                             #headers ,body              ,
-      until rest.empty?                           #6:{JSON},15:hello my friend,
-        length = rest[/\A\d+/]                    #6       #15
-        rest.slice!(0, length.length+1)           #6:      #15:
-        netstrings << rest.slice!(0, length.to_i) #{JSON}  #hello my friend
-        rest.slice!(0)                            #,       #,
-      end
-      
-      headers, body = netstrings
-      headers = JSON.parse(headers)
+  netstrings = []                             #headers ,body              ,
+  until rest.empty?                           #6:{JSON},15:hello my friend,
+    length = rest[/\A\d+/]                    #6       #15
+    rest.slice!(0, length.length+1)           #6:      #15:
+    netstrings << rest.slice!(0, length.to_i) #{JSON}  #hello my friend
+    rest.slice!(0)                            #,       #,
+  end
 
-      p headers
-      p body
-    end
+  headers, body = netstrings
+  headers = JSON.parse(headers)
+
+  p headers
+  p body
+end
+~~~
 
 As you can see, there are two netstrings in a request. The first is a JSON representation of
 the request headers and the second is the HTTP body (possibly an empty string). We can now
@@ -220,17 +248,21 @@ extend our description of the request message to include the netstrings:
 
 Send the request again:
 
-    curl http://localhost:6767/foo
+~~~
+curl http://localhost:6767/foo
 
-    {"PATH"=>"/foo", "x-forwarded-for"=>"127.0.0.1", "accept"=>"*/*", "user-agent"=>"curl/7.21.4 (universal-apple-darwin11.0) libcurl/7.21.4 OpenSSL/0.9.8r zlib/1.2.5", "host"=>"localhost:6767", "METHOD"=>"GET", "VERSION"=>"HTTP/1.1", "URI"=>"/foo", "PATTERN"=>"/"}
-    ""
+{"PATH"=>"/foo", "x-forwarded-for"=>"127.0.0.1", "accept"=>"*/*", "user-agent"=>"curl/7.21.4 (universal-apple-darwin11.0) libcurl/7.21.4 OpenSSL/0.9.8r zlib/1.2.5", "host"=>"localhost:6767", "METHOD"=>"GET", "VERSION"=>"HTTP/1.1", "URI"=>"/foo", "PATTERN"=>"/"}
+""
+~~~
 
 With a body:
 
-    curl -XPOST -d"It's the way of the road, buddy." http://localhost:6767/
+~~~
+curl -XPOST -d"It's the way of the road, buddy." http://localhost:6767/
 
-    {"PATH"=>"/", "x-forwarded-for"=>"127.0.0.1", "content-type"=>"application/x-www-form-urlencoded", "content-length"=>"32", "accept"=>"*/*", "user-agent"=>"curl/7.21.4 (universal-apple-darwin11.0) libcurl/7.21.4 OpenSSL/0.9.8r zlib/1.2.5", "host"=>"localhost:6767", "METHOD"=>"POST", "VERSION"=>"HTTP/1.1", "URI"=>"/", "PATTERN"=>"/"}
-    "It's the way of the road, buddy.
+{"PATH"=>"/", "x-forwarded-for"=>"127.0.0.1", "content-type"=>"application/x-www-form-urlencoded", "content-length"=>"32", "accept"=>"*/*", "user-agent"=>"curl/7.21.4 (universal-apple-darwin11.0) libcurl/7.21.4 OpenSSL/0.9.8r zlib/1.2.5", "host"=>"localhost:6767", "METHOD"=>"POST", "VERSION"=>"HTTP/1.1", "URI"=>"/", "PATTERN"=>"/"}
+"It's the way of the road, buddy.
+~~~
 
 
 Responses
@@ -244,20 +276,24 @@ the request message. It includes the UUID of the server, the client ID and the H
 
 Let's add a response to our test code:
 
-    response_body = 'Hello, Mongrel2!'
-    response_body = "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: #{response_body.bytesize}\r\n\r\n#{response_body}"
-    response = '%s %d:%s, %s' % [uuid, id.size, id, response_body]
-    responses.send_msg(response)
+~~~ruby
+response_body = 'Hello, Mongrel2!'
+response_body = "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: #{response_body.bytesize}\r\n\r\n#{response_body}"
+response = '%s %d:%s, %s' % [uuid, id.size, id, response_body]
+responses.send_msg(response)
+~~~
 
 That's it. We have a fully functional Mongrel2 HTTP handler. Let's try curling it again, and enjoy
 not seeing it hang as it's waiting for a response that never arrives:
 
-    curl -i http://localhost:6767/
-    HTTP/1.1 200 OK
-    Connection: close
-    Content-Length: 16
+~~~
+curl -i http://localhost:6767/
+HTTP/1.1 200 OK
+Connection: close
+Content-Length: 16
 
-    Hello, Mongrel2!
+Hello, Mongrel2!
+~~~
 
 [View entire handler on Gist](https://gist.github.com/toretore/35eb74a2cac3f214fd4b#file-simple_handler-rb)
 
@@ -299,39 +335,47 @@ is stated (by the use of the Connection: close and Content-Length headers). SSE 
 and defines the `text/event-stream` MIME type, telling a compatible client that this is an event
 stream. Let's change our handler to return (or leave out) the appropriate headers.
 
-    response_headers = {'Content-Type' => 'text/event-stream'}
-    response_body = "HTTP/1.1 200 OK\r\n#{response_headers.map{|k,v| "#{k}: #{v}" }.join("\r\n")}\r\n\r\n"
-    response = '%s %d:%s, %s' % [uuid, id.size, id, response_body]
-    responses.send_msg(response)
+~~~ruby
+response_headers = {'Content-Type' => 'text/event-stream'}
+response_body = "HTTP/1.1 200 OK\r\n#{response_headers.map{|k,v| "#{k}: #{v}" }.join("\r\n")}\r\n\r\n"
+response = '%s %d:%s, %s' % [uuid, id.size, id, response_body]
+responses.send_msg(response)
+~~~
 
 The client will now hang on to the connection, waiting for events to be pushed. To be able to push
 events to all connected clients, we need to keep track of who's connected. Add an array above the
 code responsible for listening to requests:
 
-    clients = []
-    requests.on :message do |msg|
-      #...
+~~~ruby
+clients = []
+requests.on :message do |msg|
+  #...
+~~~
 
 Then, swap out the response code from above with this:
 
-    if headers['METHOD'] == 'JSON' && JSON.parse(body)['type'] == 'disconnect'
-      clients.delete(id)
-      puts "Client #{id} disconnected (#{clients.size} clients left)"
-    else
-      clients << id
+~~~ruby
+if headers['METHOD'] == 'JSON' && JSON.parse(body)['type'] == 'disconnect'
+  clients.delete(id)
+  puts "Client #{id} disconnected (#{clients.size} clients left)"
+else
+  clients << id
 
-      response_headers = {'Content-Type' => 'text/event-stream'}
-      response_body = "HTTP/1.1 200 OK\r\n#{response_headers.map{|k,v| "#{k}: #{v}" }.join("\r\n")}\r\n\r\n"
-      response = '%s %d:%s, %s' % [uuid, id.size, id, response_body]
-      responses.send_msg(response)
+  response_headers = {'Content-Type' => 'text/event-stream'}
+  response_body = "HTTP/1.1 200 OK\r\n#{response_headers.map{|k,v| "#{k}: #{v}" }.join("\r\n")}\r\n\r\n"
+  response = '%s %d:%s, %s' % [uuid, id.size, id, response_body]
+  responses.send_msg(response)
 
-      puts "Client #{id} connected (currently #{clients.size} clients)"
-    end
+  puts "Client #{id} connected (currently #{clients.size} clients)"
+end
+~~~
 
 When a client disconnects, Mongrel2 sends a special message containing a JSON body and a single
 `METHOD` header. The JSON contains a single entry:
 
-    {"type": "disconnect"}
+~~~json
+{"type": "disconnect"}
+~~~
 
 We check for that and remove the client ID from the list.
 
@@ -343,14 +387,16 @@ This interval must be placed outside the request handling code, otherwise a new 
 would be started for each new connection, but we only want a single interval that publishes
 to all clients.
 
-    end #End of request handling code: requests.on :message do |msg|
+~~~ruby
+end #End of request handling code: requests.on :message do |msg|
 
-    c = 0
-    EM.add_periodic_timer 1 do
-      event = "event: counter\r\ndata: #{c+=1}\r\n\r\n"
-      ids = clients.join(' ')
-      responses.send_msg('%s %d:%s, %s' % ['7B0A2BF9-0DB2-4FEB-AD90-75C649B859FC', ids.size, ids, event])
-    end
+c = 0
+EM.add_periodic_timer 1 do
+  event = "event: counter\r\ndata: #{c+=1}\r\n\r\n"
+  ids = clients.join(' ')
+  responses.send_msg('%s %d:%s, %s' % ['7B0A2BF9-0DB2-4FEB-AD90-75C649B859FC', ids.size, ids, event])
+end
+~~~
 
 It simply concatenates all client IDs and adds it as a netstring between the server UUID and the event data.
 The event data is simple: An event type ("counter") and the payload (c += 1). The server's UUID is the one
@@ -407,15 +453,17 @@ we want to go through Mongrel2, so we're going to shoehorn it into our Handler.
 
 Let's replace the request handling code once again with this:
 
-    if headers['METHOD'] == 'WEBSOCKET_HANDSHAKE'
-      clients[id] = {websocket: EM::WebSocket::Connection.new(id, {})}
-      (class << clients[id][:websocket];self;end).send(:define_method, :send_data){|d| responses.send_msg('%s %d:%s, %s' % [uuid, id.size, id, d]) }
-      headers.delete_if{|k,v| k =~ /\A[A-Z]+\Z/ }#Delete Mongrel2 custom headers
-      http = "GET / HTTP/1.1\r\n#{headers.map{|k,v| "#{k}: #{v}" }.join("\r\n")}\r\n\r\n#{body}"
-      clients[id][:websocket].receive_data(http)
-    elsif headers['METHOD'] == 'WEBSOCKET'
-      puts "Received WS message: #{body}"
-    end
+~~~ruby
+if headers['METHOD'] == 'WEBSOCKET_HANDSHAKE'
+  clients[id] = {websocket: EM::WebSocket::Connection.new(id, {})}
+  (class << clients[id][:websocket];self;end).send(:define_method, :send_data){|d| responses.send_msg('%s %d:%s, %s' % [uuid, id.size, id, d]) }
+  headers.delete_if{|k,v| k =~ /\A[A-Z]+\Z/ }#Delete Mongrel2 custom headers
+  http = "GET / HTTP/1.1\r\n#{headers.map{|k,v| "#{k}: #{v}" }.join("\r\n")}\r\n\r\n#{body}"
+  clients[id][:websocket].receive_data(http)
+elsif headers['METHOD'] == 'WEBSOCKET'
+  puts "Received WS message: #{body}"
+end
+~~~
 
 I said it's a hack, remember?
 
@@ -436,17 +484,21 @@ initial handshake, it will set `METHOD` to `WEBSOCKET`.
 To test out your WebSocket, you can use the console in a browser which supports the latest version,
 like Chrome 25:
 
-    var socket = new WebSocket('ws://localhost:6767/')
-    socket.onmessage = function(msg){ console.log(msg); }
-    socket.send('Hello Mongrel2 from a WebSocket!');
+~~~javascript
+var socket = new WebSocket('ws://localhost:6767/')
+socket.onmessage = function(msg){ console.log(msg); }
+socket.send('Hello Mongrel2 from a WebSocket!');
+~~~
 
 To send something back:
 
-    #...
-    elsif headers['METHOD'] == 'WEBSOCKET'
-      puts "Received WS message: #{body}"
-      clients[id][:websocket].send('Hello yourself, browser!')
-    end
+~~~ruby
+#...
+elsif headers['METHOD'] == 'WEBSOCKET'
+  puts "Received WS message: #{body}"
+  clients[id][:websocket].send('Hello yourself, browser!')
+end
+~~~
 
 If you spy on the TCP port while creating the WebSocket on the client, you'll see the "HTTP"
 handshake:
@@ -470,7 +522,7 @@ handshake:
 After this you'll see how it's switched to WebSockets' binary protocol.
 
 
-Chat obligatoire
+The chat example
 ---
 
 No asynchronous messaging article would be complete without the ubiquitous chat example. We'll keep
@@ -478,27 +530,29 @@ it simple and only implement a simple JSON protocol without any real UI. Now tha
 up and running we can just alter the code slightly to show how it can be used for communication among
 several peers through a central server (our handler).
 
-    if headers['METHOD'] == 'WEBSOCKET_HANDSHAKE'
-      clients[id] = {websocket: EM::WebSocket::Connection.new(id, {})}
-      (class << clients[id][:websocket];self;end).send(:define_method, :send_data){|d| responses.send_msg('%s %d:%s, %s' % [uuid, id.size, id, d]) }
-      headers.delete_if{|k,v| k =~ /\A[A-Z]+\Z/ }#Delete Mongrel2 custom headers
-      http = "GET / HTTP/1.1\r\n#{headers.map{|k,v| "#{k}: #{v}" }.join("\r\n")}\r\n\r\n#{body}"
-      clients[id][:websocket].receive_data(http)
-    elsif headers['METHOD'] == 'WEBSOCKET'
-      data = JSON.parse(body)
-      if data['type'] == 'join'
-        clients[id][:name] = data['name']
-        clients.each{|i,h| h[:websocket].send(JSON.generate(type: 'join', name:clients[id][:name])) }
-        puts "#{data['name']} joined"
-      elsif data['type'] == 'message'
-        clients.each{|i,h| h[:websocket].send(JSON.generate(type: 'message', name:clients[id][:name], message:data['message'])) }
-        puts "#{clients[id][:name]} said: #{data['message']}"
-      end
-    else
-      puts "Received HTTP request"
-      response_body = "HTTP/1.1 418 I'm a teapot\r\nContent-Length: 0\r\nConnection: close\r\n\r\nNot really, I'm a WebSocket"
-      responses.send_msg('%s %d:%s, %s' % [uuid, id.size, id, response_body])
-    end
+~~~ruby
+if headers['METHOD'] == 'WEBSOCKET_HANDSHAKE'
+  clients[id] = {websocket: EM::WebSocket::Connection.new(id, {})}
+  (class << clients[id][:websocket];self;end).send(:define_method, :send_data){|d| responses.send_msg('%s %d:%s, %s' % [uuid, id.size, id, d]) }
+  headers.delete_if{|k,v| k =~ /\A[A-Z]+\Z/ }#Delete Mongrel2 custom headers
+  http = "GET / HTTP/1.1\r\n#{headers.map{|k,v| "#{k}: #{v}" }.join("\r\n")}\r\n\r\n#{body}"
+  clients[id][:websocket].receive_data(http)
+elsif headers['METHOD'] == 'WEBSOCKET'
+  data = JSON.parse(body)
+  if data['type'] == 'join'
+    clients[id][:name] = data['name']
+    clients.each{|i,h| h[:websocket].send(JSON.generate(type: 'join', name:clients[id][:name])) }
+    puts "#{data['name']} joined"
+  elsif data['type'] == 'message'
+    clients.each{|i,h| h[:websocket].send(JSON.generate(type: 'message', name:clients[id][:name], message:data['message'])) }
+    puts "#{clients[id][:name]} said: #{data['message']}"
+  end
+else
+  puts "Received HTTP request"
+  response_body = "HTTP/1.1 418 I'm a teapot\r\nContent-Length: 0\r\nConnection: close\r\n\r\nNot really, I'm a WebSocket"
+  responses.send_msg('%s %d:%s, %s' % [uuid, id.size, id, response_body])
+end
+~~~
 
 The handshake part is still the same. Our JSON protocol uses a `type` attribute to signify what kind
 of message we're dealing with; one `join` message with a `name` attribute and a `message` message
@@ -506,22 +560,24 @@ with a (you guessed it) `message` and a `name` attribute. Our response handler d
 connected clients, who choose what action to take. You can initiate a chat using the browser console
 with two sockets:
 
-    var client = function(name){
-      var socket = new WebSocket('ws://localhost:6767/');
-      socket.onmessage = function(m){
-        var json = JSON.parse(m.data);
-        console.log(j['type'] == 'join' ? j['name']+' has joined' : j['name']+' said: '+j['message']);
-      };
-      socket.say = function(m){ this.send(JSON.stringify({type: 'message', message: m})); };
-      socket.onopen = function(){ s.send(JSON.stringify({type: 'join', name: name})); };
+~~~javascript
+var client = function(name){
+  var socket = new WebSocket('ws://localhost:6767/');
+  socket.onmessage = function(m){
+    var json = JSON.parse(m.data);
+    console.log(j['type'] == 'join' ? j['name']+' has joined' : j['name']+' said: '+j['message']);
+  };
+  socket.say = function(m){ this.send(JSON.stringify({type: 'message', message: m})); };
+  socket.onopen = function(){ s.send(JSON.stringify({type: 'join', name: name})); };
 
-      return socket;
-    };
+  return socket;
+};
 
-    var alice = client('alice'),
-        bob = client('bob');
+var alice = client('alice'),
+    bob = client('bob');
 
-    alice.say('hey bob');
-    bob.say('hiya there alice');
+alice.say('hey bob');
+bob.say('hiya there alice');
+~~~
 
 [View entire WS handler on Gist](https://gist.github.com/toretore/35eb74a2cac3f214fd4b#file-websockets_handler-rb)
