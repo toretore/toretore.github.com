@@ -1,213 +1,432 @@
-#content pre code
-  .annotation
-    color: #000
-  .attribute-name
-    color: #000
-  .attribute-value
-    color: #000
-  .binary
-    color: #000
-    .char, .delimiter
+body.regular
+  #content pre code
+    .annotation
       color: #000
-  .char
-    color: #000
-    .content
+    .attribute-name
       color: #000
-    .delimiter
+    .attribute-value
       color: #000
-  .class
-    color: #06f
-    font-weight: bold
-  .class-variable
-    color: #000
-  .color
-    color: #000
-  .comment
-    color: #006
-    opacity: 0.7
-    .char, .delimiter
+    .binary
       color: #000
-  .constant
-    color: #06f
-    font-weight: bold
-  .decorator
-    color: #000
-  .definition
-    color: #000
-    font-weight: bold
-  .delimiter
-    color: black
-  .directive
-    color: #000
-    font-weight: bold
-  .docstring
-    color: #000
-  .doctype
-    color: #000
-  .done
-    text-decoration: line-through
-    color: gray
-  .entity
-    color: #000
-    font-weight: bold
-  .error
-    color: #000
-    background-color: #000
-  .escape
-    color: #000
-  .exception
-    color: #000
-    font-weight: bold
-  .float
-    color: #000
-  .function
-    color: #000
-    font-weight: bold
-    .delimiter
+      .char, .delimiter
+        color: #000
+    .char
+      color: #000
+      .content
+        color: #000
+      .delimiter
+        color: #000
+    .class
+      color: #025
+      font-weight: bold
+    .class-variable
+      color: #000
+    .color
+      color: #000
+    .comment
+      color: #002
+      opacity: 0.7
+      .char, .delimiter
+        color: #000
+    .constant
+      color: #025
+      font-weight: bold
+    .decorator
+      color: #000
+    .definition
       color: #000
       font-weight: bold
-  .global-variable
-    color: #f39
-    background: rgba(0,0,0,1)
-    padding: 0.1em
-  .hex
-    color: #000
-  .id
-    color: #000
-    font-weight: bold
-  .include
-    color: #000
-    font-weight: bold
-  .inline
-    color: black
-  .inline-delimiter
-    font-weight: bold
-    color: #600
-  .instance-variable
-    color: #c60
-  .integer
-    color: #00c
-  .imaginary
-    color: red
-  .important
-    color: #000
-  .key
-    color: #000
-    .content
-      color: #900
     .delimiter
-      color: #900
-  .keyword
-    color: #90c
-    font-weight: bold
-  .label
-    color: #000
-    font-weight: bold
-  .local-variable
-    color: #000
-  .map
-    .content
+      color: black
+    .directive
       color: #000
-    .delimiter
+      font-weight: bold
+    .docstring
       color: #000
-    background-color: hsla(200, 100%, 50%, 0.0)
-  .namespace
-    color: #000
-    font-weight: bold
-  .octal
-    color: #000
-  .operator
-  .predefined
-    color: #000
-    font-weight: bold
-  .predefined-constant
-    color: #000
-  .predefined-type
-    color: #000
-    font-weight: bold
-  .preprocessor
-    color: #000
-  .pseudo-class
-    color: #000
-    font-weight: bold
-  .regexp
-    background-color: hsla(300, 100%, 50%, 0.0)
-    .content
+    .doctype
       color: #000
-    .delimiter
+    .done
+      text-decoration: line-through
+      color: gray
+    .entity
       color: #000
-    .modifier
+      font-weight: bold
+    .error
       color: #000
-  .reserved
-    color: #000
-    font-weight: bold
-  .shell
-    background-color: hsla(120, 100%, 50%, 0.0)
-    .content
+      background-color: #000
+    .escape
       color: #000
-    .delimiter
+    .exception
       color: #000
-  .string
-    .char
-      color: #c09
-    .content
-      color: #c03
-    .delimiter
-      color: #c03
-    .modifier
+      font-weight: bold
+    .float
       color: #000
-  .symbol
-    color: #000
-    .content
-      color: #c03
-    .delimiter
-      color: #c03
-  .tag
-    color: #000
-    font-weight: bold
-  .type
-    color: #000
-    font-weight: bold
-  .value
-    color: #000
-  .variable
-    color: #000
-  .insert
-    background: hsla(120, 100%, 50%, 0.0)
-  .delete
-    background: hsla(0, 100%, 50%, 0.0)
-  .change
-    color: #000
-    background: #000
-  .head
-    color: #000
-    background: #000
-    .filename
-      color: white
-  .delete .eyecatcher
-    background-color: hsla(0, 100%, 50%, 0.0)
-    border: 1px solid hsla(0, 100%, 45%, 0.0)
-    margin: -1px
-    border-bottom: none
-    border-top-left-radius: 5px
-    border-top-right-radius: 5px
-  .insert
-    .eyecatcher
+    .function
+      color: #000
+      font-weight: bold
+      .delimiter
+        color: #000
+        font-weight: bold
+    .global-variable
+      color: #f00
+    .hex
+      color: #000
+    .id
+      color: #000
+      font-weight: bold
+    .include
+      color: #000
+      font-weight: bold
+    .inline
+      color: black
+    .inline-delimiter
+      font-weight: bold
+      color: #600
+    .instance-variable
+      color: #960
+    .integer
+      color: #00c
+    .imaginary
+      color: red
+    .important
+      color: #000
+    .key
+      color: #000
+      .content
+        color: #802
+      .delimiter
+        color: #802
+    .keyword
+      color: #234
+      font-weight: bold
+    .label
+      color: #000
+      font-weight: bold
+    .local-variable
+      color: #000
+    .map
+      .content
+        color: #000
+      .delimiter
+        color: #000
+      background-color: hsla(200, 100%, 50%, 0.0)
+    .namespace
+      color: #000
+      font-weight: bold
+    .octal
+      color: #000
+    .operator
+    .predefined
+      color: #000
+      font-weight: bold
+    .predefined-constant
+      color: #000
+    .predefined-type
+      color: #000
+      font-weight: bold
+    .preprocessor
+      color: #000
+    .pseudo-class
+      color: #000
+      font-weight: bold
+    .regexp
+      background-color: hsla(300, 100%, 50%, 0.0)
+      .content
+        color: #000
+      .delimiter
+        color: #000
+      .modifier
+        color: #000
+    .reserved
+      color: #000
+      font-weight: bold
+    .shell
       background-color: hsla(120, 100%, 50%, 0.0)
-      border: 1px solid hsla(120, 100%, 25%, 0.0)
-      margin: -1px
-      border-top: none
-      border-bottom-left-radius: 5px
-      border-bottom-right-radius: 5px
+      .content
+        color: #000
+      .delimiter
+        color: #000
+    .string
+      .char
+        color: #802
+      .content
+        color: #802
+      .delimiter
+        color: #802
+      .modifier
+        color: #000
+    .symbol
+      color: #000
+      .content
+        color: #802
+      .delimiter
+        color: #802
+    .tag
+      color: #000
+      font-weight: bold
+    .type
+      color: #000
+      font-weight: bold
+    .value
+      color: #000
+    .variable
+      color: #000
     .insert
+      background: hsla(120, 100%, 50%, 0.0)
+    .delete
+      background: hsla(0, 100%, 50%, 0.0)
+    .change
+      color: #000
+      background: #000
+    .head
+      color: #000
+      background: #000
+      .filename
+        color: white
+    .delete .eyecatcher
+      background-color: hsla(0, 100%, 50%, 0.0)
+      border: 1px solid hsla(0, 100%, 45%, 0.0)
+      margin: -1px
+      border-bottom: none
+      border-top-left-radius: 5px
+      border-top-right-radius: 5px
+    .insert
+      .eyecatcher
+        background-color: hsla(120, 100%, 50%, 0.0)
+        border: 1px solid hsla(120, 100%, 25%, 0.0)
+        margin: -1px
+        border-top: none
+        border-bottom-left-radius: 5px
+        border-bottom-right-radius: 5px
+      .insert
+        color: #000
+        background: transparent
+        font-weight: bold
+    .delete .delete
       color: #000
       background: transparent
       font-weight: bold
-  .delete .delete
-    color: #000
-    background: transparent
-    font-weight: bold
-  .change .change
-    color: #000
-  .head .head
-    color: #000
+    .change .change
+      color: #000
+    .head .head
+      color: #000
+
+
+
+
+
+
+body.zft
+  #content pre code
+    .annotation
+      color: #000
+    .attribute-name
+      color: #000
+    .attribute-value
+      color: #000
+    .binary
+      color: #000
+      .char, .delimiter
+        color: #000
+    .char
+      color: #000
+      .content
+        color: #000
+      .delimiter
+        color: #000
+    .class
+      color: #06f
+      font-weight: bold
+    .class-variable
+      color: #000
+    .color
+      color: #000
+    .comment
+      color: #006
+      opacity: 0.7
+      .char, .delimiter
+        color: #000
+    .constant
+      color: #06f
+      font-weight: bold
+    .decorator
+      color: #000
+    .definition
+      color: #000
+      font-weight: bold
+    .delimiter
+      color: black
+    .directive
+      color: #000
+      font-weight: bold
+    .docstring
+      color: #000
+    .doctype
+      color: #000
+    .done
+      text-decoration: line-through
+      color: gray
+    .entity
+      color: #000
+      font-weight: bold
+    .error
+      color: #000
+      background-color: #000
+    .escape
+      color: #000
+    .exception
+      color: #000
+      font-weight: bold
+    .float
+      color: #000
+    .function
+      color: #000
+      font-weight: bold
+      .delimiter
+        color: #000
+        font-weight: bold
+    .global-variable
+      color: #f39
+      background: rgba(0,0,0,1)
+      padding: 0.1em
+    .hex
+      color: #000
+    .id
+      color: #000
+      font-weight: bold
+    .include
+      color: #000
+      font-weight: bold
+    .inline
+      color: black
+    .inline-delimiter
+      font-weight: bold
+      color: #600
+    .instance-variable
+      color: #c60
+    .integer
+      color: #00c
+    .imaginary
+      color: red
+    .important
+      color: #000
+    .key
+      color: #000
+      .content
+        color: #900
+      .delimiter
+        color: #900
+    .keyword
+      color: #90c
+      font-weight: bold
+    .label
+      color: #000
+      font-weight: bold
+    .local-variable
+      color: #000
+    .map
+      .content
+        color: #000
+      .delimiter
+        color: #000
+      background-color: hsla(200, 100%, 50%, 0.0)
+    .namespace
+      color: #000
+      font-weight: bold
+    .octal
+      color: #000
+    .operator
+    .predefined
+      color: #000
+      font-weight: bold
+    .predefined-constant
+      color: #000
+    .predefined-type
+      color: #000
+      font-weight: bold
+    .preprocessor
+      color: #000
+    .pseudo-class
+      color: #000
+      font-weight: bold
+    .regexp
+      background-color: hsla(300, 100%, 50%, 0.0)
+      .content
+        color: #000
+      .delimiter
+        color: #000
+      .modifier
+        color: #000
+    .reserved
+      color: #000
+      font-weight: bold
+    .shell
+      background-color: hsla(120, 100%, 50%, 0.0)
+      .content
+        color: #000
+      .delimiter
+        color: #000
+    .string
+      .char
+        color: #c09
+      .content
+        color: #c03
+      .delimiter
+        color: #c03
+      .modifier
+        color: #000
+    .symbol
+      color: #000
+      .content
+        color: #c03
+      .delimiter
+        color: #c03
+    .tag
+      color: #000
+      font-weight: bold
+    .type
+      color: #000
+      font-weight: bold
+    .value
+      color: #000
+    .variable
+      color: #000
+    .insert
+      background: hsla(120, 100%, 50%, 0.0)
+    .delete
+      background: hsla(0, 100%, 50%, 0.0)
+    .change
+      color: #000
+      background: #000
+    .head
+      color: #000
+      background: #000
+      .filename
+        color: white
+    .delete .eyecatcher
+      background-color: hsla(0, 100%, 50%, 0.0)
+      border: 1px solid hsla(0, 100%, 45%, 0.0)
+      margin: -1px
+      border-bottom: none
+      border-top-left-radius: 5px
+      border-top-right-radius: 5px
+    .insert
+      .eyecatcher
+        background-color: hsla(120, 100%, 50%, 0.0)
+        border: 1px solid hsla(120, 100%, 25%, 0.0)
+        margin: -1px
+        border-top: none
+        border-bottom-left-radius: 5px
+        border-bottom-right-radius: 5px
+      .insert
+        color: #000
+        background: transparent
+        font-weight: bold
+    .delete .delete
+      color: #000
+      background: transparent
+      font-weight: bold
+    .change .change
+      color: #000
+    .head .head
+      color: #000

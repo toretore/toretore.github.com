@@ -21,6 +21,14 @@ route '/stylesheets/*' do
   "/stylesheets/#{item.identifier.split('/').last}.css"
 end
 
+compile '/javascript/*' do
+  #nothin
+end
+
+route '/javascript/*' do
+  "/javascript/#{item.identifier.split('/').last}.js"
+end
+
 compile '/' do
   filter :krimdown
   layout 'default'

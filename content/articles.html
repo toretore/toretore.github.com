@@ -1,3 +1,8 @@
-<% for item in @site.items.select{|i| i.identifier =~ /\A\/articles\/.+\Z/ && i[:published] } %>
-  [<%= item[:title] %>](/<%= item.identifier[/([^\/]+)\/$/, 1] %>/)
+<ul class="articles">
+<% for item in @site.items.select{|i| i.identifier =~ /\A\/articles\/.+\Z/ && i[:published] }.sort{|a,b| b[:date] <=> a[:date] } %>
+  <li>
+    <a href="/<%= item.identifier[/([^\/]+)\/$/, 1] %>/"><%= item[:title] %></a>
+    <span class="date"><%= item[:date].strftime('%-d %b %Y') %></span>
+  </li>
 <% end %>
+</ul>

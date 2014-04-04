@@ -46,7 +46,141 @@
 html
   height: 100%
 
-body
+body.regular
+  font-size: 100%
+  font-family: 'Clear Sans'
+  font-weight: 200
+  text-rendering: optimizeLegibility
+  height: 100%
+
+  #main
+    padding: 1em 0
+
+  #menu
+    list-style-type: none
+    overflow: hidden
+    margin: 0 auto
+    padding: 0 1em
+    max-width: 100%
+    width: 700px
+    width: 45rem
+
+    li
+      float: left
+      margin: 0 0.5em 0 0
+      font-size: 80%
+
+      a
+        display: block
+        padding: 0.2em
+        text-decoration: none
+        color: #000
+
+        &:hover, &:active
+          background: #000
+          color: #fff
+
+      &.current a
+        background: #000
+        color: #fff
+
+  #content
+    margin: 2em 0 0 0
+
+    > .block
+      padding: 0 1em
+
+      > *
+        margin-left: auto
+        margin-right: auto
+        max-width: 100%
+        width: 45rem
+
+      &.codeblock
+        position: relative
+        margin: 2em 0
+
+        code
+          padding: 0 1em
+
+    //h1, h2, h3, p, pre
+
+    h1, h2, h3
+      font-family: "Clear Sans"
+      font-weight: 200
+
+    h1
+      font-size: 150%
+      margin-bottom: 2em
+
+    h2
+      font-size: 130%
+      margin-top: 2em
+      margin-bottom: 1em
+
+    h3
+      font-size: 110%
+      margin-top: 2em
+      margin-bottom: 1em
+
+    p
+      margin-top: 1em
+      margin-bottom: 1em
+      line-height: 1.4em
+
+      &::selection
+        background: rgba(0,0,0,1)
+        color: #fff
+
+      &.image img
+
+      code
+        background: rgba(0,0,0,0.03)
+
+    a
+      color: #000
+
+    code
+      padding: 0.1em 0.3em
+      font-family: Lekton
+
+    pre
+
+      code
+        display: block
+        font-weight: 100
+        line-height: 1.2em
+        padding: 1em 0
+
+    ul
+      list-style-position: inside
+      list-style-type: square
+      margin: 2em 0
+
+      li
+        position: relative
+        line-height: 1.2em
+
+
+      &.articles
+        list-style-type: none
+
+        li
+          margin: 0.5em 0
+          display: block
+          overflow: hidden
+
+          a
+            float: left
+
+          .date
+            float: right
+
+
+
+
+
+body.zft
   +gradient($from:rgba(230, 220, 200, 0.995), $to:rgba(255, 255, 255, 0.99), $post:url(/pattern.png))
   background-attachment: fixed
   font-size: 100%
@@ -55,179 +189,182 @@ body
   text-rendering: optimizeLegibility
   height: 100%
 
-#main
-  padding: 1em 0
+  #main
+    padding: 1em 0
 
-#menu
-  list-style-type: none
-  overflow: hidden
-  margin: 0 auto
-  padding: 0 1em
-  max-width: 100%
-  width: 700px
-  width: 45rem
+  #menu
+    list-style-type: none
+    overflow: hidden
+    margin: 0 auto
+    padding: 0 1em
+    max-width: 100%
+    width: 700px
+    width: 45rem
 
-  li
-    float: left
-    margin: 0 0.5em 0 0
-    font-size: 80%
+    li
+      float: left
+      margin: 0 0.5em 0 0
+      font-size: 80%
 
-    a
-      display: block
-      padding: 0.2em
-      text-decoration: none
-      color: #000
+      a
+        display: block
+        padding: 0.2em
+        text-decoration: none
+        color: #000
 
-      &:hover, &:active
+        &:hover, &:active
+          background: #000
+          color: #fff
+
+      &.current a
         background: #000
         color: #fff
 
-    &.current a
-      background: #000
-      color: #fff
+  #content
+    margin: 2em 0 0 0
 
-#content
-  margin: 2em 0 0 0
+    > .block
+      padding: 0 1em
 
-  > .block
-    padding: 0 1em
+      > *
+        margin-left: auto
+        margin-right: auto
+        max-width: 100%
+        width: 45rem
 
-    > *
-      margin-left: auto
-      margin-right: auto
-      max-width: 100%
-      width: 45rem
-
-    &.header
-      position: relative
-
-      &:before
-        content: ""
-        display: block
-        position: absolute
-        z-index: -1
-        top: -0.6em
-        right: 0
-        bottom: -0.6em
-        left: 0
-        border-top: 0.2em solid transparent
-        border-bottom: 0.2em solid transparent
-
-      &.alpha
-        background: rgba(0, 130, 255, 0.6)
+      &.header
+        position: relative
 
         &:before
-          border-color: rgba(0, 130, 255, 0.6)
+          content: ""
+          display: block
+          position: absolute
+          z-index: -1
+          top: -0.6em
+          right: 0
+          bottom: -0.6em
+          left: 0
+          border-top: 0.2em solid transparent
+          border-bottom: 0.2em solid transparent
 
-      &.beta
-        background: rgba(255, 0, 40, 0.6)
+        &.alpha
+          background: rgba(0, 130, 255, 0.6)
+
+          &:before
+            border-color: rgba(0, 130, 255, 0.6)
+
+        &.beta
+          background: rgba(255, 0, 40, 0.6)
+
+          &:before
+            border-color: rgba(255, 0, 40, 0.6)
+
+        &.gamma
+          background: rgba(150, 255, 50, 0.6)
+
+          &:before
+            border-color: rgba(150, 255, 50, 0.6)
+
+        &.delta
+          background: rgba(255, 230, 0, 0.6)
+
+          &:before
+            border-color: rgba(255, 230, 0, 0.6)
+
+      &.codeblock
+        position: relative
+        background: rgba(0, 0, 0, 0.1)
+        margin: 3em 0 3em 0
 
         &:before
-          border-color: rgba(255, 0, 40, 0.6)
+          content: ""
+          display: block
+          position: absolute
+          z-index: -1
+          top: -1em
+          right: 0
+          bottom: -1em
+          left: 0
+          border-top: 0.5em solid rgba(0,0,0,0.05)
+          border-bottom: 0.5em solid rgba(0,0,0,0.05)
 
-      &.gamma
-        background: rgba(150, 255, 50, 0.6)
+    //h1, h2, h3, p, pre
 
-        &:before
-          border-color: rgba(150, 255, 50, 0.6)
+    h1, h2, h3
+      font-family: "Audiowide"
+      text-transform: uppercase
+      letter-spacing: 0.1em
+      padding: 0.5em 0
+      text-shadow: 1px 1px rgba(255, 255, 255, 1)
 
-      &.delta
-        background: rgba(255, 230, 0, 0.6)
+    h1
+      font-size: 150%
+      margin-bottom: 2em
 
-        &:before
-          border-color: rgba(255, 230, 0, 0.6)
+    h2
+      font-size: 130%
+      margin-top: 3em
+      margin-bottom: 2em
 
-    &.codeblock
-      position: relative
-      background: rgba(0, 0, 0, 0.1)
-      margin: 3em 0 3em 0
+    h3
+      font-size: 110%
+      margin-top: 3em
+      margin-bottom: 2em
 
-      &:before
-        content: ""
-        display: block
-        position: absolute
-        z-index: -1
-        top: -1em
-        right: 0
-        bottom: -1em
-        left: 0
-        border-top: 0.5em solid rgba(0,0,0,0.05)
-        border-bottom: 0.5em solid rgba(0,0,0,0.05)
+    p
+      margin-top: 1.5em
+      margin-bottom: 1.5em
+      line-height: 1.4em
 
-  //h1, h2, h3, p, pre
+      &::selection
+        background: rgba(0,0,0,1)
+        color: #fff
 
-  h1, h2, h3
-    font-family: "Audiowide"
-    text-transform: uppercase
-    letter-spacing: 0.1em
-    padding: 0.5em 0
-    text-shadow: 1px 1px rgba(255, 255, 255, 1)
+      &.image img
 
-  h1
-    font-size: 150%
-    margin-bottom: 2em
+      a
+        color: #000
 
-  h2
-    font-size: 130%
-    margin-top: 3em
-    margin-bottom: 2em
-
-  h3
-    font-size: 110%
-    margin-top: 3em
-    margin-bottom: 2em
-
-  p
-    margin-top: 1.5em
-    margin-bottom: 1.5em
-    line-height: 1.4em
-
-    &::selection
-      background: rgba(0,0,0,1)
-      color: #fff
-
-    &.image img
-
-    a
-      color: #000
-
-  code
-    padding: 0.1em 0.3em
-
-  pre
+      code
+        background: rgba(0,0,0,0.03)
 
     code
-      display: block
+      padding: 0.1em 0.3em
       font-family: Lekton
-      font-weight: 100
-      line-height: 1.2em
-      padding: 1em 0
 
-  ul
-    list-style-type: none
-    margin: 2em 0
+    pre
 
-    li
-      position: relative
-      margin: 0.5em 0
-      padding: 0.2em
-      line-height: 1.2em
-      background: rgba(0,0,0,0.1)
+      code
+        display: block
+        font-weight: 100
+        line-height: 1.2em
+        padding: 1em 0
 
-      &:before
-        content: ""
-        position: absolute
-        left: -1em
-        top: 0
-        background: rgba(0,0,0,0.3)
-        width: 1em
-        height: 100%
+    ul
+      list-style-type: none
+      margin: 2em 0
 
-      &:after
-        content: ""
-        position: absolute
-        right: -1em
-        top: 0
-        background: rgba(0,0,0,0.3)
-        width: 1em
-        height: 100%
+      li
+        position: relative
+        margin: 0.5em 0
+        padding: 0.2em
+        line-height: 1.2em
+        background: rgba(0,0,0,0.1)
+
+        &:before
+          content: ""
+          position: absolute
+          left: -1em
+          top: 0
+          background: rgba(0,0,0,0.3)
+          width: 1em
+          height: 100%
+
+        &:after
+          content: ""
+          position: absolute
+          right: -1em
+          top: 0
+          background: rgba(0,0,0,0.3)
+          width: 1em
+          height: 100%
