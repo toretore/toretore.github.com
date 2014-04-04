@@ -3,113 +3,128 @@
   <head>
     <meta charset="utf-8">
     <title>Blag: Comprehensive logging with Rails</title>
-    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/stylesheets/main.css">
+    <link rel="stylesheet" href="/stylesheets/coderay.css">
     <link rel="openid.server" href="http://www.myopenid.com/server" />
     <link rel="openid.delegate" href="http://toredarell.myopenid.com" />
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <!-- you don't need to keep this, but it's cool for stats! -->
-    <meta name="generator" content="nanoc 3.5.0"> 
+    <meta name="generator" content="nanoc 3.6.7">
   </head>
-  <body>
+  <body class="regular">
     <div id="main">
       <ul id="menu">
-        <li class="current"><a href="/articles/">Articles</a></li>
+        <li><a href="/articles/">Articles</a></li>
         <!-- <li><a href="/posts/">Posts</a></li> -->
       </ul>
       <div id="content">
-        <h1 id="comprehensive-logging-with-rails">Comprehensive logging with Rails</h1>
-
-<p>Log files. Nobody likes them. They can contain a lot of useful data, but getting
+        <div class="block header beta">
+ <h1 id="comprehensive-logging-with-rails">Comprehensive logging with Rails</h1>
+</div>
+<div class="block p delta">
+ <p>Log files. Nobody likes them. They can contain a lot of useful data, but getting
 at that data is difficult. You can try parsing them, but the results are less
-than perfect. Then if you add some more data to it, your parsing breaks. They’re
+than perfect. Then if you add some more data to it, your parsing breaks. They're
 not that useful for debugging either. Ever try figuring out what went wrong with
 that one request 5 days ago? Or finding out exactly why 1 in 15 requests that
 you think may be related to an external API fails?</p>
-
-<p>Log files suffer from the too common fallacy that human-readable is always
-better than machine-readable. And they’re not even human-readable. What they lack
+</div>
+<div class="block p beta">
+ <p>Log files suffer from the too common fallacy that human-readable is always
+better than machine-readable. And they're not even human-readable. What they lack
 is structure. What we want is structure. Lots of delicious, structured data that
 we can easily navigate for debugging, measuring or tracking.</p>
-
-<p>This article will show how to set up a ZeroMQ logging infrastructure in a Rails
+</div>
+<div class="block p alpha">
+ <p>This article will show how to set up a ZeroMQ logging infrastructure in a Rails
 app and how to gather relevant data that will be pushed out. The main objective
 is logging, but it goes pretty far on the sliding scale between logging and
 instrumentation.</p>
-
-<p>Setting up the logger is not that much work, but actually getting all the data
-out of an app is, as you’ll see, not straight forward.</p>
-
-<h2 id="the-zeromq-logger">The ZeroMQ logger</h2>
-
-<p>First, we need to set up the ZeroMQ components so that they’re ready to receive
+</div>
+<div class="block p alpha">
+ <p>Setting up the logger is not that much work, but actually getting all the data
+out of an app is, as you'll see, not straight forward.</p>
+</div>
+<div class="block header delta">
+ <h2 id="the-zeromq-logger">The ZeroMQ logger</h2>
+</div>
+<div class="block p delta">
+ <p>First, we need to set up the ZeroMQ components so that they're ready to receive
 our log entries and events. Everything is going to go through a single, global
 <code>ZMQLogger</code> instance, which will look something like this:</p>
+</div>
+<div class="block codeblock delta">
+ <pre><code class="ruby">zmq_ctx = <span class="constant">ZMQ</span>::<span class="constant">Context</span>.new
 
-<pre><code>zmq_ctx = ZMQ::Context.new
+<span class="keyword">class</span> <span class="class">ZMQLogger</span>
 
-class ZMQLogger
+  <span class="keyword">def</span> <span class="function">initialize</span>(ctx)
+    <span class="instance-variable">@context</span> = ctx
+    <span class="instance-variable">@push</span> = <span class="instance-variable">@context</span>.socket(<span class="constant">ZMQ</span>::<span class="constant">PUSH</span>)
+    <span class="instance-variable">@push</span>.connect(<span class="string"><span class="delimiter">'</span><span class="content">tcp://127.0.0.1:1234</span><span class="delimiter">'</span></span>)
+  <span class="keyword">end</span>
 
-  def initialize(ctx)
-    @context = ctx
-    @push = @context.socket(ZMQ::PUSH)
-    @push.connect('tcp://127.0.0.1:1234')
-  end
+  <span class="keyword">def</span> <span class="function">log</span>(atts)
+    <span class="instance-variable">@push</span>.send_strings(<span class="string"><span class="delimiter">&quot;</span><span class="content">myapp.log.</span><span class="inline"><span class="inline-delimiter">#{</span>atts[<span class="string"><span class="delimiter">'</span><span class="content">type</span><span class="delimiter">'</span></span>]<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>, <span class="constant">JSON</span>.dump(atts))
+  <span class="keyword">end</span>
 
-  def log(atts)
-    @push.send_strings("myapp.log.#{atts['type']}", JSON.dump(atts))
-  end
+  <span class="keyword">def</span> <span class="function">emit</span>(atts)
+    <span class="instance-variable">@push</span>.send_strings(<span class="string"><span class="delimiter">&quot;</span><span class="content">myapp.event.</span><span class="inline"><span class="inline-delimiter">#{</span>atts[<span class="string"><span class="delimiter">'</span><span class="content">type</span><span class="delimiter">'</span></span>]<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>, <span class="constant">JSON</span>.dump(atts))
+  <span class="keyword">end</span>
 
-  def emit(atts)
-    @push.send_strings("myapp.event.#{atts['type']}", JSON.dump(atts))
-  end
+<span class="keyword">end</span>
 
-end
-
-$ZMQ_LOGGER = ZMQLogger.new(zmq_ctx)
-</code></pre>
-
-<p>This is very simplified for the sake of clarity, the
+<span class="global-variable">$ZMQ_LOGGER</span> = <span class="constant">ZMQLogger</span>.new(zmq_ctx) </code></pre>
+</div>
+<div class="block p beta">
+ <p>This is very simplified for the sake of clarity, the
 <a href="https://gist.github.com/toretore/5943700#file-unicorn-rb">real file</a> is quite
 a bit more complex. It will also be different depending on what server you use,
 the linked example is for Unicorn, inside a Unicorn config file. The <code>$ZMQ_LOGGER</code>
 instance is set once each time Unicorn forks a worker process.</p>
-
-<p>As you can see, a log entry or an event consists of two parts:</p>
-
-<ul>
-  <li>A type, which is a period-delimited list of tokens, like domain names but
-with opposite “endianness”, like <code>myapp.log.user.login</code> or <code>myapp.event.user.create</code>.</li>
-  <li>The payload, which is a JSON document. I’ve tried to find a common structure,
-but that’s not set in stone.</li>
-</ul>
-
-<p>The JSON structure is something like this:</p>
-
-<pre><code>{
-  id: 'ytfda5sd5oijo8y832gi' #UUID
-  time: '2012-12-12 12:12:12.123+02:00' #ISO8601
-  type: 'appname.http.login-failed'
-  source: 'staging.web-01.1234' #env.host.pid
-  message: 'Login failed'
-  description: 'User not found'
-  data: {
-    username: 'bigdick45'
-    password: true
-    reason: 'user-not-found'
+</div>
+<div class="block p beta">
+ <p>As you can see, a log entry or an event consists of two parts:</p>
+</div>
+<div class="block ul alpha">
+ <ul>
+   <li>A type, which is a period-delimited list of tokens, like domain names but
+with opposite "endianness", like <code>myapp.log.user.login</code> or <code>myapp.event.user.create</code>.</li>
+   <li>The payload, which is a JSON document. I've tried to find a common structure,
+but that's not set in stone.</li>
+ </ul>
+</div>
+<div class="block p delta">
+ <p>The JSON structure is something like this:</p>
+</div>
+<div class="block codeblock beta">
+ <pre><code class="json">{
+  <span class="key"><span class="delimiter">&quot;</span><span class="content">id</span><span class="delimiter">&quot;</span></span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">ytfda5sd5oijo8y832gi</span><span class="delimiter">&quot;</span></span>,
+  <span class="key"><span class="delimiter">&quot;</span><span class="content">time</span><span class="delimiter">&quot;</span></span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">2012-12-12 12:12:12.123+02:00</span><span class="delimiter">&quot;</span></span>,
+  <span class="key"><span class="delimiter">&quot;</span><span class="content">type</span><span class="delimiter">&quot;</span></span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">appname.http.login-failed</span><span class="delimiter">&quot;</span></span>,
+  <span class="key"><span class="delimiter">&quot;</span><span class="content">source</span><span class="delimiter">&quot;</span></span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">staging.web-01.1234</span><span class="delimiter">&quot;</span></span>,
+  <span class="key"><span class="delimiter">&quot;</span><span class="content">message</span><span class="delimiter">&quot;</span></span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">Login failed</span><span class="delimiter">&quot;</span></span>,
+  <span class="key"><span class="delimiter">&quot;</span><span class="content">description</span><span class="delimiter">&quot;</span></span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">User not found</span><span class="delimiter">&quot;</span></span>,
+  <span class="key"><span class="delimiter">&quot;</span><span class="content">data</span><span class="delimiter">&quot;</span></span>: {
+    <span class="key"><span class="delimiter">&quot;</span><span class="content">username</span><span class="delimiter">&quot;</span></span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">bigdick45</span><span class="delimiter">&quot;</span></span>,
+    <span class="key"><span class="delimiter">&quot;</span><span class="content">password</span><span class="delimiter">&quot;</span></span>: <span class="value">true</span>,
+    <span class="key"><span class="delimiter">&quot;</span><span class="content">reason</span><span class="delimiter">&quot;</span></span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">user-not-found</span><span class="delimiter">&quot;</span></span>
   }
-}
-</code></pre>
-
-<p>HTTP information will be inside <code>data.http</code>, with <code>data.http.request</code> and
+} </code></pre>
+</div>
+<div class="block p delta">
+ <p>HTTP information will be inside <code>data.http</code>, with <code>data.http.request</code> and
 <code>data.http.response</code> containing request and response information.</p>
-
-<p>The PUSH socket connects to a PULL endpoint, <code>tcp://127.0.0.01:1234</code> in the
+</div>
+<div class="block p gamma">
+ <p>The PUSH socket connects to a PULL endpoint, <code>tcp://127.0.0.01:1234</code> in the
 example above. This allows us to have a single PULL socket which binds to the
 same endpoint, and several PUSH sockets, one for each worker, that send its
 messages to it. In this way, there is a single point, the PULL socket, where all
 log entries and events are sent.</p>
-
-<pre><code>+----------+
+</div>
+<div class="block codeblock alpha">
+ <pre><code class="text">+----------+
 |   PUSH   |------+
 +----------+      |
                   |
@@ -119,369 +134,400 @@ log entries and events are sent.</p>
                   |
 +----------+      |
 |   PUSH   |------+
-+----------+
-</code></pre>
-
-<p>With this set up, we can <code>$ZMQ_LOGGER.log( ... )</code> or <code>$ZMQ_LOGGER.emit( ... )</code>
++----------+ </code></pre>
+</div>
+<div class="block p beta">
+ <p>With this set up, we can <code>$ZMQ_LOGGER.log( ... )</code> or <code>$ZMQ_LOGGER.emit( ... )</code>
 from anywhere inside the app.</p>
-
-<h2 id="controller-helpers">Controller helpers</h2>
-
-<p>To make it easier, we’ll add a few methods to <code>ApplicationController</code> that lets
+</div>
+<div class="block header beta">
+ <h2 id="controller-helpers">Controller helpers</h2>
+</div>
+<div class="block p gamma">
+ <p>To make it easier, we'll add a few methods to <code>ApplicationController</code> that lets
 us easily log or emit anything we want.</p>
+</div>
+<div class="block codeblock delta">
+ <pre><code class="ruby"><span class="keyword">def</span> <span class="function">emit_event</span>(atts)
+  atts[<span class="string"><span class="delimiter">'</span><span class="content">data</span><span class="delimiter">'</span></span>] ||= {}
+  atts[<span class="string"><span class="delimiter">'</span><span class="content">data</span><span class="delimiter">'</span></span>][<span class="string"><span class="delimiter">'</span><span class="content">http</span><span class="delimiter">'</span></span>] ||= {}
+  atts[<span class="string"><span class="delimiter">'</span><span class="content">data</span><span class="delimiter">'</span></span>][<span class="string"><span class="delimiter">'</span><span class="content">http</span><span class="delimiter">'</span></span>][<span class="string"><span class="delimiter">'</span><span class="content">request-id</span><span class="delimiter">'</span></span>] ||= request.uuid
+  <span class="global-variable">$ZMQ_LOGGER</span>.emit(atts)
+<span class="keyword">rescue</span> <span class="constant">Exception</span> =&gt; e
+  logger.error <span class="string"><span class="delimiter">&quot;</span><span class="content">[LOGGING ERROR] </span><span class="inline"><span class="inline-delimiter">#{</span>e.class<span class="inline-delimiter">}</span></span><span class="content">: </span><span class="inline"><span class="inline-delimiter">#{</span>e.message<span class="inline-delimiter">}</span></span><span class="char">\n</span><span class="inline"><span class="inline-delimiter">#{</span>e.backtrace.map{|l|  <span class="string"><span class="delimiter">&quot;</span><span class="content">  </span><span class="inline"><span class="inline-delimiter">#{</span>l<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>}.join(<span class="string"><span class="delimiter">&quot;</span><span class="char">\n</span><span class="delimiter">&quot;</span></span>)<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>
+<span class="keyword">end</span>
 
-<pre><code>def emit_event(atts)
-  atts['data'] ||= {}
-  atts['data']['http'] ||= {}
-  atts['data']['http']['request-id'] ||= request.uuid
-  $ZMQ_LOGGER.emit(atts)
-rescue Exception =&gt; e
-  logger.error "[LOGGING ERROR] #{e.class}: #{e.message}\n#{e.backtrace.map{|l|  "  #{l}"}.join("\n")}"
-end
-
-def log_message(atts)
-  atts['data'] ||= {}
-  atts['data']['http'] ||= {}
-  atts['data']['http']['request-id'] ||= request.uuid
-  $ZMQ_LOGGER.log(atts)
-rescue Exception =&gt; e
-  logger.error "[LOGGING ERROR] #{e.class}: #{e.message}\n#{e.backtrace.map{|l|  "  #{l}"}.join("\n")}"
-end
-</code></pre>
-
-<p>These methods simply relay the call to <code>$ZMQ_LOGGER</code>, after adding
+<span class="keyword">def</span> <span class="function">log_message</span>(atts)
+  atts[<span class="string"><span class="delimiter">'</span><span class="content">data</span><span class="delimiter">'</span></span>] ||= {}
+  atts[<span class="string"><span class="delimiter">'</span><span class="content">data</span><span class="delimiter">'</span></span>][<span class="string"><span class="delimiter">'</span><span class="content">http</span><span class="delimiter">'</span></span>] ||= {}
+  atts[<span class="string"><span class="delimiter">'</span><span class="content">data</span><span class="delimiter">'</span></span>][<span class="string"><span class="delimiter">'</span><span class="content">http</span><span class="delimiter">'</span></span>][<span class="string"><span class="delimiter">'</span><span class="content">request-id</span><span class="delimiter">'</span></span>] ||= request.uuid
+  <span class="global-variable">$ZMQ_LOGGER</span>.log(atts)
+<span class="keyword">rescue</span> <span class="constant">Exception</span> =&gt; e
+  logger.error <span class="string"><span class="delimiter">&quot;</span><span class="content">[LOGGING ERROR] </span><span class="inline"><span class="inline-delimiter">#{</span>e.class<span class="inline-delimiter">}</span></span><span class="content">: </span><span class="inline"><span class="inline-delimiter">#{</span>e.message<span class="inline-delimiter">}</span></span><span class="char">\n</span><span class="inline"><span class="inline-delimiter">#{</span>e.backtrace.map{|l|  <span class="string"><span class="delimiter">&quot;</span><span class="content">  </span><span class="inline"><span class="inline-delimiter">#{</span>l<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>}.join(<span class="string"><span class="delimiter">&quot;</span><span class="char">\n</span><span class="delimiter">&quot;</span></span>)<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>
+<span class="keyword">end</span> </code></pre>
+</div>
+<div class="block p alpha">
+ <p>These methods simply relay the call to <code>$ZMQ_LOGGER</code>, after adding
 <code>data.http.request-id</code> if not already present. They will also rescue any exception
 that may happen to prevent logging from causing a user-facing error. It can be
 debated whether or not emitting events is critical enough to produce a user-facing
-error, depending on what kind of events you’re emitting.</p>
-
-<h2 id="logging-requests">Logging requests</h2>
-
-<p>Now that we’re able to log messages from inside a controller, we can set up
+error, depending on what kind of events you're emitting.</p>
+</div>
+<div class="block header gamma">
+ <h2 id="logging-requests">Logging requests</h2>
+</div>
+<div class="block p beta">
+ <p>Now that we're able to log messages from inside a controller, we can set up
 automatic logging of each request. This is pretty simple, we use a
 <code>before_filter</code> to simply <code>log_message</code> the data we want. With this approach,
-you can get most request data. That’s already pretty good, there’s lots of
+you can get most request data. That's already pretty good, there's lots of
 useful information in the request data. But it would be nice to have access
 to <em>everything</em>:</p>
-
-<ul>
-  <li>Request data: headers, parameters, body</li>
-  <li>Response data: headers, status, body</li>
-  <li>Timing data</li>
-  <li>Rails also makes available which SQL queries were run and which templates
+</div>
+<div class="block ul beta">
+ <ul>
+   <li>Request data: headers, parameters, body</li>
+   <li>Response data: headers, status, body</li>
+   <li>Timing data</li>
+   <li>Rails also makes available which SQL queries were run and which templates
 were rendered, with the time it took for each to execute.</li>
-</ul>
-
-<p>It’s already obvious that if we want response information, the <code>before_filter</code>
-won’t work. So what about an <code>after_filter</code>? Turns out it’s not so easy getting
-this information out of Rails, and it’s time for some..</p>
-
-<h3 id="invasive-surgery">Invasive surgery</h3>
-
-<p>The information we want is in there somewhere, we just have to cut it open,
+ </ul>
+</div>
+<div class="block p gamma">
+ <p>It's already obvious that if we want response information, the <code>before_filter</code>
+won't work. So what about an <code>after_filter</code>? Turns out it's not so easy getting
+this information out of Rails, and it's time for some..</p>
+</div>
+<div class="block header gamma">
+ <h3 id="invasive-surgery">Invasive surgery</h3>
+</div>
+<div class="block p gamma">
+ <p>The information we want is in there somewhere, we just have to cut it open,
 figure out where it is and yank it out. With the help of a Rube Goldbergian
-setup using Rack middleware and Rails instrumentation, it’s possible.</p>
-
-<p>The response data is for some reason not accessible inside Rails, even in an
-<code>after_filter</code>. So we’ll have to take a step back and go outside Rails to get
+setup using Rack middleware and Rails instrumentation, it's possible.</p>
+</div>
+<div class="block p alpha">
+ <p>The response data is for some reason not accessible inside Rails, even in an
+<code>after_filter</code>. So we'll have to take a step back and go outside Rails to get
 it. This means add a Rack middleware around the call which captures the data.</p>
+</div>
+<div class="block codeblock beta">
+ <pre><code class="ruby"><span class="keyword">class</span> <span class="class">RequestInfoMiddleware</span>
 
-<pre><code>class RequestInfoMiddleware
- 
- 
-  def initialize(app)
-    @app = app
-  end
- 
- 
-  def call(env)
+
+  <span class="keyword">def</span> <span class="function">initialize</span>(app)
+    <span class="instance-variable">@app</span> = app
+  <span class="keyword">end</span>
+
+
+  <span class="keyword">def</span> <span class="function">call</span>(env)
     data_callbacks = []
-    env['zmq-logger.get-data'] = -&gt;(cb){ data_callbacks &lt;&lt; cb }
- 
-    request_start = env['HTTP_X_REQUEST_START'] || env['HTTP_X_QUEUE_START']
-    begin
-      request_start = Time.at(request_start[2..-1].to_f) if request_start
-      request_start = nil if request_start &amp;&amp; (request_start &gt; Time.now || request_start &lt; (Time.now-3600)) #Sanity check
-    rescue
-      request_start = nil
-    end
- 
-    start = Time.now
-      status, headers, body = @app.call(env)
-    stop = Time.now
- 
-    atts = {'status' =&gt; status, 'headers' =&gt; headers, 'rack_start' =&gt; start, 'rack_stop' =&gt; stop}
-    atts['request_start'] = request_start if request_start
- 
+    env[<span class="string"><span class="delimiter">'</span><span class="content">zmq-logger.get-data</span><span class="delimiter">'</span></span>] = -&gt;(cb){ data_callbacks &lt;&lt; cb }
+
+    request_start = env[<span class="string"><span class="delimiter">'</span><span class="content">HTTP_X_REQUEST_START</span><span class="delimiter">'</span></span>] || env[<span class="string"><span class="delimiter">'</span><span class="content">HTTP_X_QUEUE_START</span><span class="delimiter">'</span></span>]
+    <span class="keyword">begin</span>
+      request_start = <span class="constant">Time</span>.at(request_start[<span class="integer">2</span>..<span class="integer">-1</span>].to_f) <span class="keyword">if</span> request_start
+      request_start = <span class="predefined-constant">nil</span> <span class="keyword">if</span> request_start &amp;&amp; (request_start &gt; <span class="constant">Time</span>.now || request_start &lt; (<span class="constant">Time</span>.now-<span class="integer">3600</span>)) <span class="comment">#Sanity check</span>
+    <span class="keyword">rescue</span>
+      request_start = <span class="predefined-constant">nil</span>
+    <span class="keyword">end</span>
+
+    start = <span class="constant">Time</span>.now
+      status, headers, body = <span class="instance-variable">@app</span>.call(env)
+    stop = <span class="constant">Time</span>.now
+
+    atts = {<span class="string"><span class="delimiter">'</span><span class="content">status</span><span class="delimiter">'</span></span> =&gt; status, <span class="string"><span class="delimiter">'</span><span class="content">headers</span><span class="delimiter">'</span></span> =&gt; headers, <span class="string"><span class="delimiter">'</span><span class="content">rack_start</span><span class="delimiter">'</span></span> =&gt; start, <span class="string"><span class="delimiter">'</span><span class="content">rack_stop</span><span class="delimiter">'</span></span> =&gt; stop}
+    atts[<span class="string"><span class="delimiter">'</span><span class="content">request_start</span><span class="delimiter">'</span></span>] = request_start <span class="keyword">if</span> request_start
+
     data_callbacks.each{|cb| cb.call(atts) }
     [status, headers, body]
-  end
- 
- 
-end
-</code></pre>
+  <span class="keyword">end</span>
 
-<p>Simple enough. It sends the request down the stack for Rails to process it
-and captures the response. It even times how long it takes. But it doesn’t
-actually log anything; it doesn’t have access to all the information we want.
+
+<span class="keyword">end</span> </code></pre>
+</div>
+<div class="block p gamma">
+ <p>Simple enough. It sends the request down the stack for Rails to process it
+and captures the response. It even times how long it takes. But it doesn't
+actually log anything; it doesn't have access to all the information we want.
 We have two choices here: Either send the missing data back up, but that would
 involve serializing it in special headers or something like that (must conform to
-Rack interface), and there was another reason why I didn’t do that which I’ve
+Rack interface), and there was another reason why I didn't do that which I've
 since forgotten. The other option is to capture the response data and send it
 back down the stack to Rails, which has all the other data.</p>
-
-<p>So what it does is add a Proc to the Rack <code>env</code> which, when run, adds a callback
+</div>
+<div class="block p beta">
+ <p>So what it does is add a Proc to the Rack <code>env</code> which, when run, adds a callback
 that will be run when the request has bubbled back up. This way, something
-further down the stack can register a callback to get the response data. I’m not
+further down the stack can register a callback to get the response data. I'm not
 sure whether this is kind of clever or the dumbest idea in the world, but it works.</p>
-
-<p>To use this from somewhere further down in the stack, you’d register a listener
+</div>
+<div class="block p gamma">
+ <p>To use this from somewhere further down in the stack, you'd register a listener
 like so:</p>
-
-<pre><code>env['zmq-logger.get-data'].call(-&gt;(data){
-  # Do stuff with data
-})
-</code></pre>
-
-<p>This callback would be called after the request was processed and a response had
+</div>
+<div class="block codeblock gamma">
+ <pre><code class="ruby">env[<span class="string"><span class="delimiter">'</span><span class="content">zmq-logger.get-data</span><span class="delimiter">'</span></span>].call(-&gt;(data){
+  <span class="comment"># Do stuff with data</span>
+}) </code></pre>
+</div>
+<div class="block p alpha">
+ <p>This callback would be called after the request was processed and a response had
 been sent upstream. In this way, it reaches quite uncomfortably down into
 something that is supposed to be done running.</p>
-
-<p>Now, onto the other part of this hideous Rube Goldberg duo: Using Rails’
-instrumentation to get data about queries and renders. Given the nature of Rails’
+</div>
+<div class="block p delta">
+ <p>Now, onto the other part of this hideous Rube Goldberg duo: Using Rails'
+instrumentation to get data about queries and renders. Given the nature of Rails'
 instrumentation, which uses a simple pub/sub implementation to publish data
-to those who are interested, it’s time some more callback action.</p>
+to those who are interested, it's time some more callback action.</p>
+</div>
+<div class="block codeblock beta">
+ <pre><code class="ruby"><span class="keyword">class</span> <span class="class">InstrumentationDataGatherer</span>
 
-<pre><code>class InstrumentationDataGatherer
- 
-  def initialize
+  <span class="keyword">def</span> <span class="function">initialize</span>
     subscribe
-  end
- 
- 
-  def subscribe
-    ActiveSupport::Notifications.subscribe do |*event|
-      if event[0] == 'start_processing.action_controller'
-        start(event)
-      elsif event[0] == 'process_action.action_controller'
-        done(event)
-      elsif event[0] == 'zmq-logger.call-me'
-        @callbacks &lt;&lt; event[4] if @callbacks
-      elsif event[0] == 'sql.active_record' &amp;&amp; event[4][:name] != 'SCHEMA'
-        @queries &lt;&lt; event if @queries
-      elsif event[0] == '!render_template.action_view'
-        @renders &lt;&lt; event if @renders
-      end
-    end
-  end
- 
- 
-  def start(event)
-    @id = event[3]
-    @queries = []
-    @renders = []
-    @callbacks = []
-  end
- 
-  def done(event)
-    @callbacks.each do |cb|
-      atts = {
-        'stop' =&gt; event[2],
-        'start' =&gt; event[1],
-        'controller' =&gt; event[4][:controller],
-        'action' =&gt; event[4][:action],
-        'queries' =&gt; @queries.map{|e| {'time' =&gt; e[2]-e[1], 'sql' =&gt; e[4][:sql]} },
-        'renders' =&gt; @renders.map{|e| {'time' =&gt; e[2]-e[1], 'path' =&gt; e[4][:virtual_path]} }
-      }
- 
-      atts['view_runtime'] = event[4][:view_runtime] / 1000.0 if event[4][:view_runtime]
-      atts['db_runtime'] = event[4][:db_runtime] / 1000.0 if event[4][:db_runtime]
- 
-      cb.call(atts)
-    end
-  rescue =&gt; e
-    Rails.logger.error "[LOGGER] #{e.class}: #{e.message}\n#{e.backtrace.map{|l|  "  #{l}"}.join("\n")}"
-  end
- 
-end
- 
-InstrumentationDataGatherer.new
-</code></pre>
+  <span class="keyword">end</span>
 
-<p>This class, which goes in an initializer file, sets up listeners for relevant
+
+  <span class="keyword">def</span> <span class="function">subscribe</span>
+    <span class="constant">ActiveSupport</span>::<span class="constant">Notifications</span>.subscribe <span class="keyword">do</span> |*event|
+      <span class="keyword">if</span> event[<span class="integer">0</span>] == <span class="string"><span class="delimiter">'</span><span class="content">start_processing.action_controller</span><span class="delimiter">'</span></span>
+        start(event)
+      <span class="keyword">elsif</span> event[<span class="integer">0</span>] == <span class="string"><span class="delimiter">'</span><span class="content">process_action.action_controller</span><span class="delimiter">'</span></span>
+        done(event)
+      <span class="keyword">elsif</span> event[<span class="integer">0</span>] == <span class="string"><span class="delimiter">'</span><span class="content">zmq-logger.call-me</span><span class="delimiter">'</span></span>
+        <span class="instance-variable">@callbacks</span> &lt;&lt; event[<span class="integer">4</span>] <span class="keyword">if</span> <span class="instance-variable">@callbacks</span>
+      <span class="keyword">elsif</span> event[<span class="integer">0</span>] == <span class="string"><span class="delimiter">'</span><span class="content">sql.active_record</span><span class="delimiter">'</span></span> &amp;&amp; event[<span class="integer">4</span>][<span class="symbol">:name</span>] != <span class="string"><span class="delimiter">'</span><span class="content">SCHEMA</span><span class="delimiter">'</span></span>
+        <span class="instance-variable">@queries</span> &lt;&lt; event <span class="keyword">if</span> <span class="instance-variable">@queries</span>
+      <span class="keyword">elsif</span> event[<span class="integer">0</span>] == <span class="string"><span class="delimiter">'</span><span class="content">!render_template.action_view</span><span class="delimiter">'</span></span>
+        <span class="instance-variable">@renders</span> &lt;&lt; event <span class="keyword">if</span> <span class="instance-variable">@renders</span>
+      <span class="keyword">end</span>
+    <span class="keyword">end</span>
+  <span class="keyword">end</span>
+
+
+  <span class="keyword">def</span> <span class="function">start</span>(event)
+    <span class="instance-variable">@id</span> = event[<span class="integer">3</span>]
+    <span class="instance-variable">@queries</span> = []
+    <span class="instance-variable">@renders</span> = []
+    <span class="instance-variable">@callbacks</span> = []
+  <span class="keyword">end</span>
+
+  <span class="keyword">def</span> <span class="function">done</span>(event)
+    <span class="instance-variable">@callbacks</span>.each <span class="keyword">do</span> |cb|
+      atts = {
+        <span class="string"><span class="delimiter">'</span><span class="content">stop</span><span class="delimiter">'</span></span> =&gt; event[<span class="integer">2</span>],
+        <span class="string"><span class="delimiter">'</span><span class="content">start</span><span class="delimiter">'</span></span> =&gt; event[<span class="integer">1</span>],
+        <span class="string"><span class="delimiter">'</span><span class="content">controller</span><span class="delimiter">'</span></span> =&gt; event[<span class="integer">4</span>][<span class="symbol">:controller</span>],
+        <span class="string"><span class="delimiter">'</span><span class="content">action</span><span class="delimiter">'</span></span> =&gt; event[<span class="integer">4</span>][<span class="symbol">:action</span>],
+        <span class="string"><span class="delimiter">'</span><span class="content">queries</span><span class="delimiter">'</span></span> =&gt; <span class="instance-variable">@queries</span>.map{|e| {<span class="string"><span class="delimiter">'</span><span class="content">time</span><span class="delimiter">'</span></span> =&gt; e[<span class="integer">2</span>]-e[<span class="integer">1</span>], <span class="string"><span class="delimiter">'</span><span class="content">sql</span><span class="delimiter">'</span></span> =&gt; e[<span class="integer">4</span>][<span class="symbol">:sql</span>]} },
+        <span class="string"><span class="delimiter">'</span><span class="content">renders</span><span class="delimiter">'</span></span> =&gt; <span class="instance-variable">@renders</span>.map{|e| {<span class="string"><span class="delimiter">'</span><span class="content">time</span><span class="delimiter">'</span></span> =&gt; e[<span class="integer">2</span>]-e[<span class="integer">1</span>], <span class="string"><span class="delimiter">'</span><span class="content">path</span><span class="delimiter">'</span></span> =&gt; e[<span class="integer">4</span>][<span class="symbol">:virtual_path</span>]} }
+      }
+
+      atts[<span class="string"><span class="delimiter">'</span><span class="content">view_runtime</span><span class="delimiter">'</span></span>] = event[<span class="integer">4</span>][<span class="symbol">:view_runtime</span>] / <span class="float">1000.0</span> <span class="keyword">if</span> event[<span class="integer">4</span>][<span class="symbol">:view_runtime</span>]
+      atts[<span class="string"><span class="delimiter">'</span><span class="content">db_runtime</span><span class="delimiter">'</span></span>] = event[<span class="integer">4</span>][<span class="symbol">:db_runtime</span>] / <span class="float">1000.0</span> <span class="keyword">if</span> event[<span class="integer">4</span>][<span class="symbol">:db_runtime</span>]
+
+      cb.call(atts)
+    <span class="keyword">end</span>
+  <span class="keyword">rescue</span> =&gt; e
+    <span class="constant">Rails</span>.logger.error <span class="string"><span class="delimiter">&quot;</span><span class="content">[LOGGER] </span><span class="inline"><span class="inline-delimiter">#{</span>e.class<span class="inline-delimiter">}</span></span><span class="content">: </span><span class="inline"><span class="inline-delimiter">#{</span>e.message<span class="inline-delimiter">}</span></span><span class="char">\n</span><span class="inline"><span class="inline-delimiter">#{</span>e.backtrace.map{|l|  <span class="string"><span class="delimiter">&quot;</span><span class="content">  </span><span class="inline"><span class="inline-delimiter">#{</span>l<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>}.join(<span class="string"><span class="delimiter">&quot;</span><span class="char">\n</span><span class="delimiter">&quot;</span></span>)<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>
+  <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+
+<span class="constant">InstrumentationDataGatherer</span>.new </code></pre>
+</div>
+<div class="block p gamma">
+ <p>This class, which goes in an initializer file, sets up listeners for relevant
 data, gathers it and relays it to its own listeners using a callback. It has to guess
 when a request starts and ends by looking at the events, and can not make the
 assumption that it is inside a request cycle at all (console, test run). To listen
-for this data, you’d use:</p>
-
-<pre><code>ActiveSupport::Notifications.instrument('zmq-logger.call-me', -&gt;(atts){
-  # Do stuff with atts
-})
-</code></pre>
-
-<p>(I probably could have used Instrumentation’s pub/sub functionality directly
-instead of adding another layer of callbacks, but hey, what’s another callback!)</p>
-
-<p>Now we finally have all the data we want, and we can take..</p>
-
-<h3 id="another-look-at-request-logging">Another look at request logging</h3>
-
-<p>We now have 2 callback mechanisms: From the Rack middleware and from the Rails
+for this data, you'd use:</p>
+</div>
+<div class="block codeblock delta">
+ <pre><code class="ruby"><span class="constant">ActiveSupport</span>::<span class="constant">Notifications</span>.instrument(<span class="string"><span class="delimiter">'</span><span class="content">zmq-logger.call-me</span><span class="delimiter">'</span></span>, -&gt;(atts){
+  <span class="comment"># Do stuff with atts</span>
+}) </code></pre>
+</div>
+<div class="block p alpha">
+ <p>(I probably could have used Instrumentation's pub/sub functionality directly
+instead of adding another layer of callbacks, but hey, what's another callback!)</p>
+</div>
+<div class="block p alpha">
+ <p>Now we finally have all the data we want, and we can take..</p>
+</div>
+<div class="block header alpha">
+ <h3 id="another-look-at-request-logging">Another look at request logging</h3>
+</div>
+<div class="block p beta">
+ <p>We now have 2 callback mechanisms: From the Rack middleware and from the Rails
 instrumentation. If we register one callback with each, when both those
 have returned, it means we have all the data necessary to actually send away a
-log entry. So let’s add a simple <code>before_filter</code> that sets up the callbacks.</p>
+log entry. So let's add a simple <code>before_filter</code> that sets up the callbacks.</p>
+</div>
+<div class="block codeblock alpha">
+ <pre><code class="ruby">before_filter <span class="symbol">:setup_logging</span>
 
-<pre><code>before_filter :setup_logging
-
-def setup_logging
-  @memory_before = memory_usage
-  start = Time.now
-  instr, mw = nil, nil
-  ActiveSupport::Notifications.instrument('zmq-logger.call-me', -&gt;(atts){
+<span class="keyword">def</span> <span class="function">setup_logging</span>
+  <span class="instance-variable">@memory_before</span> = memory_usage
+  start = <span class="constant">Time</span>.now
+  instr, mw = <span class="predefined-constant">nil</span>, <span class="predefined-constant">nil</span>
+  <span class="constant">ActiveSupport</span>::<span class="constant">Notifications</span>.instrument(<span class="string"><span class="delimiter">'</span><span class="content">zmq-logger.call-me</span><span class="delimiter">'</span></span>, -&gt;(atts){
     instr = atts
-    log_request(atts, mw) if mw
+    log_request(atts, mw) <span class="keyword">if</span> mw
   })
-  request.env['zmq-logger.get-data'].call(-&gt;(data){
+  request.env[<span class="string"><span class="delimiter">'</span><span class="content">zmq-logger.get-data</span><span class="delimiter">'</span></span>].call(-&gt;(data){
     mw = data
-    log_request(instr, data) if instr
+    log_request(instr, data) <span class="keyword">if</span> instr
   })
-end
-</code></pre>
-
-<p>Now, when all the data is available, <code>log_request</code> will be called. Let’s have a
+<span class="keyword">end</span> </code></pre>
+</div>
+<div class="block p delta">
+ <p>Now, when all the data is available, <code>log_request</code> will be called. Let's have a
 look at it.</p>
-
-<pre><code>def log_request(instr, mw)
+</div>
+<div class="block codeblock delta">
+ <pre><code class="ruby"><span class="keyword">def</span> <span class="function">log_request</span>(instr, mw)
   atts = {
-    'type' =&gt; 'request',
-    'data' =&gt; {
-      'time' =&gt; mw['rack_stop']-mw['rack_start'],
-      'timing' =&gt; {
-        'rails_start' =&gt; instr['start'],
-        'rails_stop' =&gt; instr['stop'],
-        'rails_time' =&gt; instr['stop']-instr['start'],
-        'rack_start' =&gt; mw['rack_start'],
-        'rack_stop' =&gt; mw['rack_stop'],
-        'rack_time' =&gt; mw['rack_stop']-mw['rack_start'],
-        'rails_db_time' =&gt; instr['db_runtime'],
-        'rails_view_time' =&gt; instr['view_runtime'],
-        'custom' =&gt; timing_data_for_logging
+    <span class="string"><span class="delimiter">'</span><span class="content">type</span><span class="delimiter">'</span></span> =&gt; <span class="string"><span class="delimiter">'</span><span class="content">request</span><span class="delimiter">'</span></span>,
+    <span class="string"><span class="delimiter">'</span><span class="content">data</span><span class="delimiter">'</span></span> =&gt; {
+      <span class="string"><span class="delimiter">'</span><span class="content">time</span><span class="delimiter">'</span></span> =&gt; mw[<span class="string"><span class="delimiter">'</span><span class="content">rack_stop</span><span class="delimiter">'</span></span>]-mw[<span class="string"><span class="delimiter">'</span><span class="content">rack_start</span><span class="delimiter">'</span></span>],
+      <span class="string"><span class="delimiter">'</span><span class="content">timing</span><span class="delimiter">'</span></span> =&gt; {
+        <span class="string"><span class="delimiter">'</span><span class="content">rails_start</span><span class="delimiter">'</span></span> =&gt; instr[<span class="string"><span class="delimiter">'</span><span class="content">start</span><span class="delimiter">'</span></span>],
+        <span class="string"><span class="delimiter">'</span><span class="content">rails_stop</span><span class="delimiter">'</span></span> =&gt; instr[<span class="string"><span class="delimiter">'</span><span class="content">stop</span><span class="delimiter">'</span></span>],
+        <span class="string"><span class="delimiter">'</span><span class="content">rails_time</span><span class="delimiter">'</span></span> =&gt; instr[<span class="string"><span class="delimiter">'</span><span class="content">stop</span><span class="delimiter">'</span></span>]-instr[<span class="string"><span class="delimiter">'</span><span class="content">start</span><span class="delimiter">'</span></span>],
+        <span class="string"><span class="delimiter">'</span><span class="content">rack_start</span><span class="delimiter">'</span></span> =&gt; mw[<span class="string"><span class="delimiter">'</span><span class="content">rack_start</span><span class="delimiter">'</span></span>],
+        <span class="string"><span class="delimiter">'</span><span class="content">rack_stop</span><span class="delimiter">'</span></span> =&gt; mw[<span class="string"><span class="delimiter">'</span><span class="content">rack_stop</span><span class="delimiter">'</span></span>],
+        <span class="string"><span class="delimiter">'</span><span class="content">rack_time</span><span class="delimiter">'</span></span> =&gt; mw[<span class="string"><span class="delimiter">'</span><span class="content">rack_stop</span><span class="delimiter">'</span></span>]-mw[<span class="string"><span class="delimiter">'</span><span class="content">rack_start</span><span class="delimiter">'</span></span>],
+        <span class="string"><span class="delimiter">'</span><span class="content">rails_db_time</span><span class="delimiter">'</span></span> =&gt; instr[<span class="string"><span class="delimiter">'</span><span class="content">db_runtime</span><span class="delimiter">'</span></span>],
+        <span class="string"><span class="delimiter">'</span><span class="content">rails_view_time</span><span class="delimiter">'</span></span> =&gt; instr[<span class="string"><span class="delimiter">'</span><span class="content">view_runtime</span><span class="delimiter">'</span></span>],
+        <span class="string"><span class="delimiter">'</span><span class="content">custom</span><span class="delimiter">'</span></span> =&gt; timing_data_for_logging
       },
-      'memory' =&gt; [@memory_before, memory_usage], #[start of request, end of request]
-      'queries' =&gt; instr['queries'],
-      'renders' =&gt; instr['renders'],
-      'user' =&gt; {
-        'id' =&gt; current_user &amp;&amp; current_user.id,
-        'username' =&gt; current_user &amp;&amp; current_user.username
+      <span class="string"><span class="delimiter">'</span><span class="content">memory</span><span class="delimiter">'</span></span> =&gt; [<span class="instance-variable">@memory_before</span>, memory_usage], <span class="comment">#[start of request, end of request]</span>
+      <span class="string"><span class="delimiter">'</span><span class="content">queries</span><span class="delimiter">'</span></span> =&gt; instr[<span class="string"><span class="delimiter">'</span><span class="content">queries</span><span class="delimiter">'</span></span>],
+      <span class="string"><span class="delimiter">'</span><span class="content">renders</span><span class="delimiter">'</span></span> =&gt; instr[<span class="string"><span class="delimiter">'</span><span class="content">renders</span><span class="delimiter">'</span></span>],
+      <span class="string"><span class="delimiter">'</span><span class="content">user</span><span class="delimiter">'</span></span> =&gt; {
+        <span class="string"><span class="delimiter">'</span><span class="content">id</span><span class="delimiter">'</span></span> =&gt; current_user &amp;&amp; current_user.id,
+        <span class="string"><span class="delimiter">'</span><span class="content">username</span><span class="delimiter">'</span></span> =&gt; current_user &amp;&amp; current_user.username
       },
-      'http' =&gt; request_data_for_logging.merge(
-        'response' =&gt; {
-          'status' =&gt; mw['status'],
-          'headers' =&gt; mw['headers'],
-          'body' =&gt; false &amp;&amp; mw['body'] # You may not want to log every response body
+      <span class="string"><span class="delimiter">'</span><span class="content">http</span><span class="delimiter">'</span></span> =&gt; request_data_for_logging.merge(
+        <span class="string"><span class="delimiter">'</span><span class="content">response</span><span class="delimiter">'</span></span> =&gt; {
+          <span class="string"><span class="delimiter">'</span><span class="content">status</span><span class="delimiter">'</span></span> =&gt; mw[<span class="string"><span class="delimiter">'</span><span class="content">status</span><span class="delimiter">'</span></span>],
+          <span class="string"><span class="delimiter">'</span><span class="content">headers</span><span class="delimiter">'</span></span> =&gt; mw[<span class="string"><span class="delimiter">'</span><span class="content">headers</span><span class="delimiter">'</span></span>],
+          <span class="string"><span class="delimiter">'</span><span class="content">body</span><span class="delimiter">'</span></span> =&gt; <span class="predefined-constant">false</span> &amp;&amp; mw[<span class="string"><span class="delimiter">'</span><span class="content">body</span><span class="delimiter">'</span></span>] <span class="comment"># You may not want to log every response body</span>
         }
       )
     }
   }
-   
-  if mw['request_start']
-    atts['data']['timing'].merge!(
-      'request_start' =&gt; mw['request_start'],
-      'request_time' =&gt; atts['data']['timing']['rack_stop'] - mw['request_start'],
-      'queue_time' =&gt; atts['data']['timing']['rack_start'] - mw['request_start']
+
+  <span class="keyword">if</span> mw[<span class="string"><span class="delimiter">'</span><span class="content">request_start</span><span class="delimiter">'</span></span>]
+    atts[<span class="string"><span class="delimiter">'</span><span class="content">data</span><span class="delimiter">'</span></span>][<span class="string"><span class="delimiter">'</span><span class="content">timing</span><span class="delimiter">'</span></span>].merge!(
+      <span class="string"><span class="delimiter">'</span><span class="content">request_start</span><span class="delimiter">'</span></span> =&gt; mw[<span class="string"><span class="delimiter">'</span><span class="content">request_start</span><span class="delimiter">'</span></span>],
+      <span class="string"><span class="delimiter">'</span><span class="content">request_time</span><span class="delimiter">'</span></span> =&gt; atts[<span class="string"><span class="delimiter">'</span><span class="content">data</span><span class="delimiter">'</span></span>][<span class="string"><span class="delimiter">'</span><span class="content">timing</span><span class="delimiter">'</span></span>][<span class="string"><span class="delimiter">'</span><span class="content">rack_stop</span><span class="delimiter">'</span></span>] - mw[<span class="string"><span class="delimiter">'</span><span class="content">request_start</span><span class="delimiter">'</span></span>],
+      <span class="string"><span class="delimiter">'</span><span class="content">queue_time</span><span class="delimiter">'</span></span> =&gt; atts[<span class="string"><span class="delimiter">'</span><span class="content">data</span><span class="delimiter">'</span></span>][<span class="string"><span class="delimiter">'</span><span class="content">timing</span><span class="delimiter">'</span></span>][<span class="string"><span class="delimiter">'</span><span class="content">rack_start</span><span class="delimiter">'</span></span>] - mw[<span class="string"><span class="delimiter">'</span><span class="content">request_start</span><span class="delimiter">'</span></span>]
     )
-  end
-   
+  <span class="keyword">end</span>
+
   log_message(atts)
-end
-</code></pre>
-
-<p>Quite long, but all it does is extract the relevant data into a hash and send it to <code>log_message</code>.</p>
-
-<h2 id="logging-exceptions">Logging exceptions</h2>
-
-<p>Logging exceptions is a lot simpler. We just need to wait for one to occur,
+<span class="keyword">end</span> </code></pre>
+</div>
+<div class="block p gamma">
+ <p>Quite long, but all it does is extract the relevant data into a hash and send it to <code>log_message</code>.</p>
+</div>
+<div class="block header beta">
+ <h2 id="logging-exceptions">Logging exceptions</h2>
+</div>
+<div class="block p delta">
+ <p>Logging exceptions is a lot simpler. We just need to wait for one to occur,
 then format it and throw it into the ether.</p>
+</div>
+<div class="block codeblock gamma">
+ <pre><code class="ruby">rescue_from <span class="constant">Exception</span>, <span class="key">with</span>: <span class="symbol">:handle_exception</span>
 
-<pre><code>rescue_from Exception, with: :handle_exception
-
-def handle_exception(exception)
-  if Rails.env.development?
+<span class="keyword">def</span> <span class="function">handle_exception</span>(exception)
+  <span class="keyword">if</span> <span class="constant">Rails</span>.env.development?
     log_exception(exception)
     raise exception
-  else
-    begin
+  <span class="keyword">else</span>
+    <span class="keyword">begin</span>
       log_exception(exception)
-      respond_to do |format|
-        format.html{ render file: Rails.root.join('public', '500.html'), layout: false, status: 500 }
-      end
-    rescue Exception =&gt; e
-      logger.error "[EXCEPTION LOGGING EXCEPTION] #{e.class}: #{e.message}\n#{e.backtrace.map{|l|  "  #{l}"}.join("\n")}"
-      render :text =&gt; "Inxception :(", status: 500
-    end
-  end
-end
-   
-   
-def log_exception(exception)
+      respond_to <span class="keyword">do</span> |format|
+        format.html{ render <span class="key">file</span>: <span class="constant">Rails</span>.root.join(<span class="string"><span class="delimiter">'</span><span class="content">public</span><span class="delimiter">'</span></span>, <span class="string"><span class="delimiter">'</span><span class="content">500.html</span><span class="delimiter">'</span></span>), <span class="key">layout</span>: <span class="predefined-constant">false</span>, <span class="key">status</span>: <span class="integer">500</span> }
+      <span class="keyword">end</span>
+    <span class="keyword">rescue</span> <span class="constant">Exception</span> =&gt; e
+      logger.error <span class="string"><span class="delimiter">&quot;</span><span class="content">[EXCEPTION LOGGING EXCEPTION] </span><span class="inline"><span class="inline-delimiter">#{</span>e.class<span class="inline-delimiter">}</span></span><span class="content">: </span><span class="inline"><span class="inline-delimiter">#{</span>e.message<span class="inline-delimiter">}</span></span><span class="char">\n</span><span class="inline"><span class="inline-delimiter">#{</span>e.backtrace.map{|l|  <span class="string"><span class="delimiter">&quot;</span><span class="content">  </span><span class="inline"><span class="inline-delimiter">#{</span>l<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>}.join(<span class="string"><span class="delimiter">&quot;</span><span class="char">\n</span><span class="delimiter">&quot;</span></span>)<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>
+      render <span class="symbol">:text</span> =&gt; <span class="string"><span class="delimiter">&quot;</span><span class="content">Inxception :(</span><span class="delimiter">&quot;</span></span>, <span class="key">status</span>: <span class="integer">500</span>
+    <span class="keyword">end</span>
+  <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+
+<span class="keyword">def</span> <span class="function">log_exception</span>(exception)
   atts = {
-    'type' =&gt; 'exception',
-    'message' =&gt; 'Uncaught exception',
-    'description' =&gt; 'An unanticipated exception occured',
-    'data' =&gt; {
-      'exception' =&gt; {
-        'type' =&gt; exception.class.name,
-        'message' =&gt; exception.message,
-        'backtrace' =&gt; exception.backtrace
+    <span class="string"><span class="delimiter">'</span><span class="content">type</span><span class="delimiter">'</span></span> =&gt; <span class="string"><span class="delimiter">'</span><span class="content">exception</span><span class="delimiter">'</span></span>,
+    <span class="string"><span class="delimiter">'</span><span class="content">message</span><span class="delimiter">'</span></span> =&gt; <span class="string"><span class="delimiter">'</span><span class="content">Uncaught exception</span><span class="delimiter">'</span></span>,
+    <span class="string"><span class="delimiter">'</span><span class="content">description</span><span class="delimiter">'</span></span> =&gt; <span class="string"><span class="delimiter">'</span><span class="content">An unanticipated exception occured</span><span class="delimiter">'</span></span>,
+    <span class="string"><span class="delimiter">'</span><span class="content">data</span><span class="delimiter">'</span></span> =&gt; {
+      <span class="string"><span class="delimiter">'</span><span class="content">exception</span><span class="delimiter">'</span></span> =&gt; {
+        <span class="string"><span class="delimiter">'</span><span class="content">type</span><span class="delimiter">'</span></span> =&gt; exception.class.name,
+        <span class="string"><span class="delimiter">'</span><span class="content">message</span><span class="delimiter">'</span></span> =&gt; exception.message,
+        <span class="string"><span class="delimiter">'</span><span class="content">backtrace</span><span class="delimiter">'</span></span> =&gt; exception.backtrace
       },
-      'http' =&gt; request_data_for_logging
+      <span class="string"><span class="delimiter">'</span><span class="content">http</span><span class="delimiter">'</span></span> =&gt; request_data_for_logging
     }
   }
-   
+
   log_message(atts)
-end
-</code></pre>
-
-<p>Simple enough. One thing we should add is a separate handler for
+<span class="keyword">end</span> </code></pre>
+</div>
+<div class="block p delta">
+ <p>Simple enough. One thing we should add is a separate handler for
 <code>ActiveRecord::RecordNotFound</code> exceptions:</p>
+</div>
+<div class="block codeblock alpha">
+ <pre><code class="ruby">rescue_from <span class="constant">ActiveRecord</span>::<span class="constant">RecordNotFound</span>, <span class="symbol">:with</span> =&gt; <span class="symbol">:handle_not_found</span>
 
-<pre><code>rescue_from ActiveRecord::RecordNotFound, :with =&gt; :handle_not_found
-
-def handle_not_found(exception)
+<span class="keyword">def</span> <span class="function">handle_not_found</span>(exception)
   log_exception(exception)
-   
-  if true#Rails.env.production?
-    respond_to do |format|
-      format.html{ render file: Rails.root.join('public', '404.html'), layout: false, status: 404 }
-      format.xml{ render xml: error_xml('The requested resource could not be found'), status: 404 }
-    end
-  else
+
+  <span class="keyword">if</span> <span class="predefined-constant">true</span><span class="comment">#Rails.env.production?</span>
+    respond_to <span class="keyword">do</span> |format|
+      format.html{ render <span class="key">file</span>: <span class="constant">Rails</span>.root.join(<span class="string"><span class="delimiter">'</span><span class="content">public</span><span class="delimiter">'</span></span>, <span class="string"><span class="delimiter">'</span><span class="content">404.html</span><span class="delimiter">'</span></span>), <span class="key">layout</span>: <span class="predefined-constant">false</span>, <span class="key">status</span>: <span class="integer">404</span> }
+      format.xml{ render <span class="key">xml</span>: error_xml(<span class="string"><span class="delimiter">'</span><span class="content">The requested resource could not be found</span><span class="delimiter">'</span></span>), <span class="key">status</span>: <span class="integer">404</span> }
+    <span class="keyword">end</span>
+  <span class="keyword">else</span>
     raise exception
-  end
-rescue Exception =&gt; e
-  logger.error "[EXCEPTION LOGGING EXCEPTION] #{e.class}: #{e.message}\n#{e.backtrace.map{|l|  "  #{l}"}.join("\n")}"
-  render :text =&gt; "Inxception :("
-end
-</code></pre>
-
-<h2 id="code">Code</h2>
-
-<p>I’ve left quite a bit of code out here, which you can find in
+  <span class="keyword">end</span>
+<span class="keyword">rescue</span> <span class="constant">Exception</span> =&gt; e
+  logger.error <span class="string"><span class="delimiter">&quot;</span><span class="content">[EXCEPTION LOGGING EXCEPTION] </span><span class="inline"><span class="inline-delimiter">#{</span>e.class<span class="inline-delimiter">}</span></span><span class="content">: </span><span class="inline"><span class="inline-delimiter">#{</span>e.message<span class="inline-delimiter">}</span></span><span class="char">\n</span><span class="inline"><span class="inline-delimiter">#{</span>e.backtrace.map{|l|  <span class="string"><span class="delimiter">&quot;</span><span class="content">  </span><span class="inline"><span class="inline-delimiter">#{</span>l<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>}.join(<span class="string"><span class="delimiter">&quot;</span><span class="char">\n</span><span class="delimiter">&quot;</span></span>)<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>
+  render <span class="symbol">:text</span> =&gt; <span class="string"><span class="delimiter">&quot;</span><span class="content">Inxception :(</span><span class="delimiter">&quot;</span></span>
+<span class="keyword">end</span> </code></pre>
+</div>
+<div class="block header gamma">
+ <h2 id="code">Code</h2>
+</div>
+<div class="block p beta">
+ <p>I've left quite a bit of code out here, which you can find in
 <a href="https://gist.github.com/toretore/5943700">this gist</a>.</p>
-
-<h2 id="doing-something-useful-with-the-data">Doing something useful with the data</h2>
-
-<p>I’ve only shown you how to gather and publish the data. If you don’t create
-that PULL socket, it’s not going anywhere.</p>
-
-<p>What you do with it is up to you. I take all the log messages and shove them
+</div>
+<div class="block header gamma">
+ <h2 id="doing-something-useful-with-the-data">Doing something useful with the data</h2>
+</div>
+<div class="block p alpha">
+ <p>I've only shown you how to gather and publish the data. If you don't create
+that PULL socket, it's not going anywhere.</p>
+</div>
+<div class="block p gamma">
+ <p>What you do with it is up to you. I take all the log messages and shove them
 into ElasticSearch, the code for which can be found
 <a href="https://gist.github.com/toretore/5943700#file-zmq-elasticsearch-logger-rb">here</a>.
-You will notice that it connects to something called ‘ZMQ FAN’; this is just a
+You will notice that it connects to something called 'ZMQ FAN'; this is just a
 little process that runs on each machine that gathers all the messages from the
 PULL socket and published them (fans them out) on a PUB socket.</p>
-
+</div>
       </div>
     </div>
+    <script src="/javascript/konami.js"></script>
   </body>
 </html>

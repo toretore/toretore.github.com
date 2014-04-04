@@ -1,0 +1,417 @@
+body.regular #content pre code .annotation {
+  color: black; }
+body.regular #content pre code .attribute-name {
+  color: black; }
+body.regular #content pre code .attribute-value {
+  color: black; }
+body.regular #content pre code .binary {
+  color: black; }
+  body.regular #content pre code .binary .char, body.regular #content pre code .binary .delimiter {
+    color: black; }
+body.regular #content pre code .char {
+  color: black; }
+  body.regular #content pre code .char .content {
+    color: black; }
+  body.regular #content pre code .char .delimiter {
+    color: black; }
+body.regular #content pre code .class {
+  color: #002255;
+  font-weight: bold; }
+body.regular #content pre code .class-variable {
+  color: black; }
+body.regular #content pre code .color {
+  color: black; }
+body.regular #content pre code .comment {
+  color: #000022;
+  opacity: 0.7; }
+  body.regular #content pre code .comment .char, body.regular #content pre code .comment .delimiter {
+    color: black; }
+body.regular #content pre code .constant {
+  color: #002255;
+  font-weight: bold; }
+body.regular #content pre code .decorator {
+  color: black; }
+body.regular #content pre code .definition {
+  color: black;
+  font-weight: bold; }
+body.regular #content pre code .delimiter {
+  color: black; }
+body.regular #content pre code .directive {
+  color: black;
+  font-weight: bold; }
+body.regular #content pre code .docstring {
+  color: black; }
+body.regular #content pre code .doctype {
+  color: black; }
+body.regular #content pre code .done {
+  text-decoration: line-through;
+  color: gray; }
+body.regular #content pre code .entity {
+  color: black;
+  font-weight: bold; }
+body.regular #content pre code .error {
+  color: black;
+  background-color: black; }
+body.regular #content pre code .escape {
+  color: black; }
+body.regular #content pre code .exception {
+  color: black;
+  font-weight: bold; }
+body.regular #content pre code .float {
+  color: black; }
+body.regular #content pre code .function {
+  color: black;
+  font-weight: bold; }
+  body.regular #content pre code .function .delimiter {
+    color: black;
+    font-weight: bold; }
+body.regular #content pre code .global-variable {
+  color: red; }
+body.regular #content pre code .hex {
+  color: black; }
+body.regular #content pre code .id {
+  color: black;
+  font-weight: bold; }
+body.regular #content pre code .include {
+  color: black;
+  font-weight: bold; }
+body.regular #content pre code .inline {
+  color: black; }
+body.regular #content pre code .inline-delimiter {
+  font-weight: bold;
+  color: #660000; }
+body.regular #content pre code .instance-variable {
+  color: #996600; }
+body.regular #content pre code .integer {
+  color: #0000cc; }
+body.regular #content pre code .imaginary {
+  color: red; }
+body.regular #content pre code .important {
+  color: black; }
+body.regular #content pre code .key {
+  color: black; }
+  body.regular #content pre code .key .content {
+    color: #880022; }
+  body.regular #content pre code .key .delimiter {
+    color: #880022; }
+body.regular #content pre code .keyword {
+  color: #223344;
+  font-weight: bold; }
+body.regular #content pre code .label {
+  color: black;
+  font-weight: bold; }
+body.regular #content pre code .local-variable {
+  color: black; }
+body.regular #content pre code .map {
+  background-color: rgba(0, 170, 255, 0); }
+  body.regular #content pre code .map .content {
+    color: black; }
+  body.regular #content pre code .map .delimiter {
+    color: black; }
+body.regular #content pre code .namespace {
+  color: black;
+  font-weight: bold; }
+body.regular #content pre code .octal {
+  color: black; }
+body.regular #content pre code .predefined {
+  color: black;
+  font-weight: bold; }
+body.regular #content pre code .predefined-constant {
+  color: black; }
+body.regular #content pre code .predefined-type {
+  color: black;
+  font-weight: bold; }
+body.regular #content pre code .preprocessor {
+  color: black; }
+body.regular #content pre code .pseudo-class {
+  color: black;
+  font-weight: bold; }
+body.regular #content pre code .regexp {
+  background-color: rgba(255, 0, 255, 0); }
+  body.regular #content pre code .regexp .content {
+    color: black; }
+  body.regular #content pre code .regexp .delimiter {
+    color: black; }
+  body.regular #content pre code .regexp .modifier {
+    color: black; }
+body.regular #content pre code .reserved {
+  color: black;
+  font-weight: bold; }
+body.regular #content pre code .shell {
+  background-color: rgba(0, 255, 0, 0); }
+  body.regular #content pre code .shell .content {
+    color: black; }
+  body.regular #content pre code .shell .delimiter {
+    color: black; }
+body.regular #content pre code .string .char {
+  color: #880022; }
+body.regular #content pre code .string .content {
+  color: #880022; }
+body.regular #content pre code .string .delimiter {
+  color: #880022; }
+body.regular #content pre code .string .modifier {
+  color: black; }
+body.regular #content pre code .symbol {
+  color: black; }
+  body.regular #content pre code .symbol .content {
+    color: #880022; }
+  body.regular #content pre code .symbol .delimiter {
+    color: #880022; }
+body.regular #content pre code .tag {
+  color: black;
+  font-weight: bold; }
+body.regular #content pre code .type {
+  color: black;
+  font-weight: bold; }
+body.regular #content pre code .value {
+  color: black; }
+body.regular #content pre code .variable {
+  color: black; }
+body.regular #content pre code .insert {
+  background: rgba(0, 255, 0, 0); }
+body.regular #content pre code .delete {
+  background: rgba(255, 0, 0, 0); }
+body.regular #content pre code .change {
+  color: black;
+  background: black; }
+body.regular #content pre code .head {
+  color: black;
+  background: black; }
+  body.regular #content pre code .head .filename {
+    color: white; }
+body.regular #content pre code .delete .eyecatcher {
+  background-color: rgba(255, 0, 0, 0);
+  border: 1px solid rgba(230, 0, 0, 0);
+  margin: -1px;
+  border-bottom: none;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px; }
+body.regular #content pre code .insert .eyecatcher {
+  background-color: rgba(0, 255, 0, 0);
+  border: 1px solid rgba(0, 128, 0, 0);
+  margin: -1px;
+  border-top: none;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px; }
+body.regular #content pre code .insert .insert {
+  color: black;
+  background: transparent;
+  font-weight: bold; }
+body.regular #content pre code .delete .delete {
+  color: black;
+  background: transparent;
+  font-weight: bold; }
+body.regular #content pre code .change .change {
+  color: black; }
+body.regular #content pre code .head .head {
+  color: black; }
+
+body.zft #content pre code .annotation {
+  color: black; }
+body.zft #content pre code .attribute-name {
+  color: black; }
+body.zft #content pre code .attribute-value {
+  color: black; }
+body.zft #content pre code .binary {
+  color: black; }
+  body.zft #content pre code .binary .char, body.zft #content pre code .binary .delimiter {
+    color: black; }
+body.zft #content pre code .char {
+  color: black; }
+  body.zft #content pre code .char .content {
+    color: black; }
+  body.zft #content pre code .char .delimiter {
+    color: black; }
+body.zft #content pre code .class {
+  color: #0066ff;
+  font-weight: bold; }
+body.zft #content pre code .class-variable {
+  color: black; }
+body.zft #content pre code .color {
+  color: black; }
+body.zft #content pre code .comment {
+  color: #000066;
+  opacity: 0.7; }
+  body.zft #content pre code .comment .char, body.zft #content pre code .comment .delimiter {
+    color: black; }
+body.zft #content pre code .constant {
+  color: #0066ff;
+  font-weight: bold; }
+body.zft #content pre code .decorator {
+  color: black; }
+body.zft #content pre code .definition {
+  color: black;
+  font-weight: bold; }
+body.zft #content pre code .delimiter {
+  color: black; }
+body.zft #content pre code .directive {
+  color: black;
+  font-weight: bold; }
+body.zft #content pre code .docstring {
+  color: black; }
+body.zft #content pre code .doctype {
+  color: black; }
+body.zft #content pre code .done {
+  text-decoration: line-through;
+  color: gray; }
+body.zft #content pre code .entity {
+  color: black;
+  font-weight: bold; }
+body.zft #content pre code .error {
+  color: black;
+  background-color: black; }
+body.zft #content pre code .escape {
+  color: black; }
+body.zft #content pre code .exception {
+  color: black;
+  font-weight: bold; }
+body.zft #content pre code .float {
+  color: black; }
+body.zft #content pre code .function {
+  color: black;
+  font-weight: bold; }
+  body.zft #content pre code .function .delimiter {
+    color: black;
+    font-weight: bold; }
+body.zft #content pre code .global-variable {
+  color: #ff3399;
+  background: black;
+  padding: 0.1em; }
+body.zft #content pre code .hex {
+  color: black; }
+body.zft #content pre code .id {
+  color: black;
+  font-weight: bold; }
+body.zft #content pre code .include {
+  color: black;
+  font-weight: bold; }
+body.zft #content pre code .inline {
+  color: black; }
+body.zft #content pre code .inline-delimiter {
+  font-weight: bold;
+  color: #660000; }
+body.zft #content pre code .instance-variable {
+  color: #cc6600; }
+body.zft #content pre code .integer {
+  color: #0000cc; }
+body.zft #content pre code .imaginary {
+  color: red; }
+body.zft #content pre code .important {
+  color: black; }
+body.zft #content pre code .key {
+  color: black; }
+  body.zft #content pre code .key .content {
+    color: #990000; }
+  body.zft #content pre code .key .delimiter {
+    color: #990000; }
+body.zft #content pre code .keyword {
+  color: #9900cc;
+  font-weight: bold; }
+body.zft #content pre code .label {
+  color: black;
+  font-weight: bold; }
+body.zft #content pre code .local-variable {
+  color: black; }
+body.zft #content pre code .map {
+  background-color: rgba(0, 170, 255, 0); }
+  body.zft #content pre code .map .content {
+    color: black; }
+  body.zft #content pre code .map .delimiter {
+    color: black; }
+body.zft #content pre code .namespace {
+  color: black;
+  font-weight: bold; }
+body.zft #content pre code .octal {
+  color: black; }
+body.zft #content pre code .predefined {
+  color: black;
+  font-weight: bold; }
+body.zft #content pre code .predefined-constant {
+  color: black; }
+body.zft #content pre code .predefined-type {
+  color: black;
+  font-weight: bold; }
+body.zft #content pre code .preprocessor {
+  color: black; }
+body.zft #content pre code .pseudo-class {
+  color: black;
+  font-weight: bold; }
+body.zft #content pre code .regexp {
+  background-color: rgba(255, 0, 255, 0); }
+  body.zft #content pre code .regexp .content {
+    color: black; }
+  body.zft #content pre code .regexp .delimiter {
+    color: black; }
+  body.zft #content pre code .regexp .modifier {
+    color: black; }
+body.zft #content pre code .reserved {
+  color: black;
+  font-weight: bold; }
+body.zft #content pre code .shell {
+  background-color: rgba(0, 255, 0, 0); }
+  body.zft #content pre code .shell .content {
+    color: black; }
+  body.zft #content pre code .shell .delimiter {
+    color: black; }
+body.zft #content pre code .string .char {
+  color: #cc0099; }
+body.zft #content pre code .string .content {
+  color: #cc0033; }
+body.zft #content pre code .string .delimiter {
+  color: #cc0033; }
+body.zft #content pre code .string .modifier {
+  color: black; }
+body.zft #content pre code .symbol {
+  color: black; }
+  body.zft #content pre code .symbol .content {
+    color: #cc0033; }
+  body.zft #content pre code .symbol .delimiter {
+    color: #cc0033; }
+body.zft #content pre code .tag {
+  color: black;
+  font-weight: bold; }
+body.zft #content pre code .type {
+  color: black;
+  font-weight: bold; }
+body.zft #content pre code .value {
+  color: black; }
+body.zft #content pre code .variable {
+  color: black; }
+body.zft #content pre code .insert {
+  background: rgba(0, 255, 0, 0); }
+body.zft #content pre code .delete {
+  background: rgba(255, 0, 0, 0); }
+body.zft #content pre code .change {
+  color: black;
+  background: black; }
+body.zft #content pre code .head {
+  color: black;
+  background: black; }
+  body.zft #content pre code .head .filename {
+    color: white; }
+body.zft #content pre code .delete .eyecatcher {
+  background-color: rgba(255, 0, 0, 0);
+  border: 1px solid rgba(230, 0, 0, 0);
+  margin: -1px;
+  border-bottom: none;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px; }
+body.zft #content pre code .insert .eyecatcher {
+  background-color: rgba(0, 255, 0, 0);
+  border: 1px solid rgba(0, 128, 0, 0);
+  margin: -1px;
+  border-top: none;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px; }
+body.zft #content pre code .insert .insert {
+  color: black;
+  background: transparent;
+  font-weight: bold; }
+body.zft #content pre code .delete .delete {
+  color: black;
+  background: transparent;
+  font-weight: bold; }
+body.zft #content pre code .change .change {
+  color: black; }
+body.zft #content pre code .head .head {
+  color: black; }
