@@ -1,85 +1,47 @@
 #!/usr/bin/env ruby
 
-# A few helpful tips about the Rules file:
-#
-# * The string given to #compile and #route are matching patterns for
-#   identifiers--not for paths. Therefore, you can’t match on extension.
-#
-# * The order of rules is important: for each item, only the first matching
-#   rule is applied.
-#
-# * Item identifiers start and end with a slash (e.g. “/about/” for the file
-#   “content/about.html”). To select all children, grandchildren, … of an
-#   item, use the pattern “/about/*/”; “/about/*” will also select the parent,
-#   because “*” matches zero or more characters.
 
-compile '/stylesheets/*' do
+### ASSETS
+
+passthrough '/images/**/*'
+passthrough '/javascript/**/*'
+passthrough '/fonts/**/*'
+
+compile '/stylesheets/*.sass' do
   filter :sass
+  write item.identifier.without_ext + '.css'
 end
 
-route '/stylesheets/*' do
-  "/stylesheets/#{item.identifier.split('/').last}.css"
+compile '/images/**/*' do
+  write item.identifier
 end
 
-compile '/javascript/*' do
-  #nothin
-end
 
-route '/javascript/*' do
-  "/javascript/#{item.identifier.split('/').last}.js"
-end
+### VIEWS
 
-compile '/' do
-  filter :krimdown
-  layout 'default'
-end
-
-compile /\/articles\/$/ do
+compile '/articles.erb.md' do
   filter :erb
   filter :krimdown
-  layout 'default'
+  layout '/default.erb'
+  write item.identifier.without_exts + '/index.html'
 end
 
-compile '/articles/*' do
-  layout 'article'
+compile /^\/(articles|posts)\/.+\.md$/ do
   filter :krimdown
-  layout 'default'
+  layout '/article.erb'
+  layout '/default.erb'
+  write item.identifier.without_ext + '/index.html'
 end
 
-compile '/posts/*' do
-  filter :krimdown
-  layout 'default'
+compile '/**/*.html' do
+  layout '/default.erb'
+  write item.identifier
 end
 
-compile '*' do
-  if item.binary?
-    # don’t filter binary items
-  else
-    filter :erb
-    layout 'default'
-  end
+
+###
+
+compile '/**/*' do
 end
 
-route '/articles' do
-  '/articles/index.html'
-end
-
-route '/articles/*' do
-  item.identifier.gsub(/\/articles/, '') + 'index.html'
-end
-
-route '/posts/*' do
-  item.identifier.gsub(/\/posts/, '') + 'index.html'
-end
-
-route '*' do
-  if item.binary?
-    # Write item with identifier /foo/ to /foo.ext
-    item.identifier.chop + '.' + item[:extension]
-  else
-    # Write item with identifier /foo/ to /foo/index.html
-    item.identifier + 'index.html'
-  end
-end
-
-layout '*', :erb
+layout '/*.erb', :erb

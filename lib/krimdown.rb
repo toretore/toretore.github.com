@@ -1,5 +1,6 @@
 # encoding: utf-8
 require 'kramdown'
+require 'coderay'
 
 
 
@@ -37,7 +38,7 @@ module ZFT
 
   class KrimdownFilter < ::Nanoc::Filter
 
-    register 'ZFT::KrimdownFilter', :krimdown
+    identifier :krimdown
     requires 'kramdown'
 
     # Runs the content through [Kramdown](http://kramdown.rubyforge.org/).

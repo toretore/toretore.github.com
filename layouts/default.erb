@@ -1,0 +1,21 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Blag: <%= @item[:title] %></title>
+    <link rel="stylesheet" href="/stylesheets/main.css">
+    <link rel="stylesheet" href="/stylesheets/coderay.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  </head>
+  <body class="regular">
+    <div id="main">
+      <ul id="menu">
+        <li<% if @item.identifier.to_s =~ /\/articles\/$/ %> class="current"<% end %>><a href="/articles/">Articles</a></li>
+        <!-- <li<% if @item.identifier.to_s =~ /\/posts/ %> class="current"<% end %>><a href="/posts/">Posts</a></li> -->
+      </ul>
+      <div id="content">
+        <%= yield %>
+      </div>
+    </div>
+  </body>
+</html>
