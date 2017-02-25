@@ -13,11 +13,9 @@
   0% {
     top: -0.6em;
     bottom: -0.6em; }
-
   50% {
     top: -0.5em;
     bottom: -0.7em; }
-
   100% {
     top: -0.6em;
     bottom: -0.6em; } }
@@ -60,13 +58,13 @@ body {
       display: block;
       padding: 0.2em;
       text-decoration: none;
-      color: black; }
+      color: #000; }
       #menu li a:hover, #menu li a:active {
-        background: black;
-        color: white; }
+        background: #000;
+        color: #fff; }
     #menu li.current a {
-      background: black;
-      color: white; }
+      background: #000;
+      color: #fff; }
 
 #content {
   margin: 2em 0 0 0; }
@@ -144,9 +142,9 @@ body {
     line-height: 1.4em; }
     #content p::selection {
       background: black;
-      color: white; }
+      color: #fff; }
     #content p a {
-      color: black; }
+      color: #000; }
     #content p code {
       background: rgba(0, 0, 0, 0.03); }
   #content code {
