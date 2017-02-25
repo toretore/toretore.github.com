@@ -3,8 +3,11 @@
   <head>
     <meta charset="utf-8">
     <title>Blag: Comprehensive logging with Rails</title>
-    <link rel="stylesheet" href="/stylesheets/main.css">
-    <link rel="stylesheet" href="/stylesheets/coderay.css">
+    
+      <link rel="stylesheet" href="/stylesheets/coderay.135e3e1b6cc4bef562b61f21fdbfb62997c41481.css">
+    
+      <link rel="stylesheet" href="/stylesheets/main.7a63588b33223094f547634357b56847af8af897.css">
+    
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
   </head>
   <body class="regular">
@@ -17,39 +20,32 @@
         <div class="block"><h1>Comprehensive logging with Rails</h1></div>
 
 
-<div class="block p alpha">
  <p>Log files. Nobody likes them. They can contain a lot of useful data, but getting
 at that data is difficult. You can try parsing them, but the results are less
 than perfect. Then if you add some more data to it, your parsing breaks. They're
 not that useful for debugging either. Ever try figuring out what went wrong with
 that one request 5 days ago? Or finding out exactly why 1 in 15 requests that
 you think may be related to an external API fails?</p>
-</div>
-<div class="block p gamma">
+
  <p>Log files suffer from the too common fallacy that human-readable is always
 better than machine-readable. And they're not even human-readable. What they lack
 is structure. What we want is structure. Lots of delicious, structured data that
 we can easily navigate for debugging, measuring or tracking.</p>
-</div>
-<div class="block p alpha">
+
  <p>This article will show how to set up a ZeroMQ logging infrastructure in a Rails
 app and how to gather relevant data that will be pushed out. The main objective
 is logging, but it goes pretty far on the sliding scale between logging and
 instrumentation.</p>
-</div>
-<div class="block p gamma">
+
  <p>Setting up the logger is not that much work, but actually getting all the data
 out of an app is, as you'll see, not straight forward.</p>
-</div>
-<div class="block header delta">
+
  <h2 id="the-zeromq-logger">The ZeroMQ logger</h2>
-</div>
-<div class="block p gamma">
+
  <p>First, we need to set up the ZeroMQ components so that they're ready to receive
 our log entries and events. Everything is going to go through a single, global
 <code>ZMQLogger</code> instance, which will look something like this:</p>
-</div>
-<div class="block codeblock gamma">
+
  <pre><code class="ruby">zmq_ctx = <span class="constant">ZMQ</span>::<span class="constant">Context</span>.new
 
 <span class="keyword">class</span> <span class="class">ZMQLogger</span>
@@ -71,29 +67,24 @@ our log entries and events. Everything is going to go through a single, global
 <span class="keyword">end</span>
 
 <span class="global-variable">$ZMQ_LOGGER</span> = <span class="constant">ZMQLogger</span>.new(zmq_ctx) </code></pre>
-</div>
-<div class="block p delta">
+
  <p>This is very simplified for the sake of clarity, the
 <a href="https://gist.github.com/toretore/5943700#file-unicorn-rb">real file</a> is quite
 a bit more complex. It will also be different depending on what server you use,
 the linked example is for Unicorn, inside a Unicorn config file. The <code>$ZMQ_LOGGER</code>
 instance is set once each time Unicorn forks a worker process.</p>
-</div>
-<div class="block p delta">
+
  <p>As you can see, a log entry or an event consists of two parts:</p>
-</div>
-<div class="block ul alpha">
+
  <ul>
    <li>A type, which is a period-delimited list of tokens, like domain names but
 with opposite "endianness", like <code>myapp.log.user.login</code> or <code>myapp.event.user.create</code>.</li>
    <li>The payload, which is a JSON document. I've tried to find a common structure,
 but that's not set in stone.</li>
  </ul>
-</div>
-<div class="block p delta">
+
  <p>The JSON structure is something like this:</p>
-</div>
-<div class="block codeblock gamma">
+
  <pre><code class="json">{
   <span class="key"><span class="delimiter">&quot;</span><span class="content">id</span><span class="delimiter">&quot;</span></span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">ytfda5sd5oijo8y832gi</span><span class="delimiter">&quot;</span></span>,
   <span class="key"><span class="delimiter">&quot;</span><span class="content">time</span><span class="delimiter">&quot;</span></span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">2012-12-12 12:12:12.123+02:00</span><span class="delimiter">&quot;</span></span>,
@@ -107,19 +98,16 @@ but that's not set in stone.</li>
     <span class="key"><span class="delimiter">&quot;</span><span class="content">reason</span><span class="delimiter">&quot;</span></span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">user-not-found</span><span class="delimiter">&quot;</span></span>
   }
 } </code></pre>
-</div>
-<div class="block p alpha">
+
  <p>HTTP information will be inside <code>data.http</code>, with <code>data.http.request</code> and
 <code>data.http.response</code> containing request and response information.</p>
-</div>
-<div class="block p gamma">
+
  <p>The PUSH socket connects to a PULL endpoint, <code>tcp://127.0.0.01:1234</code> in the
 example above. This allows us to have a single PULL socket which binds to the
 same endpoint, and several PUSH sockets, one for each worker, that send its
 messages to it. In this way, there is a single point, the PULL socket, where all
 log entries and events are sent.</p>
-</div>
-<div class="block codeblock alpha">
+
  <pre><code class="text">+----------+
 |   PUSH   |------+
 +----------+      |
@@ -131,19 +119,15 @@ log entries and events are sent.</p>
 +----------+      |
 |   PUSH   |------+
 +----------+ </code></pre>
-</div>
-<div class="block p beta">
+
  <p>With this set up, we can <code>$ZMQ_LOGGER.log( ... )</code> or <code>$ZMQ_LOGGER.emit( ... )</code>
 from anywhere inside the app.</p>
-</div>
-<div class="block header alpha">
+
  <h2 id="controller-helpers">Controller helpers</h2>
-</div>
-<div class="block p gamma">
+
  <p>To make it easier, we'll add a few methods to <code>ApplicationController</code> that lets
 us easily log or emit anything we want.</p>
-</div>
-<div class="block codeblock delta">
+
  <pre><code class="ruby"><span class="keyword">def</span> <span class="function">emit_event</span>(atts)
   atts[<span class="string"><span class="delimiter">'</span><span class="content">data</span><span class="delimiter">'</span></span>] ||= {}
   atts[<span class="string"><span class="delimiter">'</span><span class="content">data</span><span class="delimiter">'</span></span>][<span class="string"><span class="delimiter">'</span><span class="content">http</span><span class="delimiter">'</span></span>] ||= {}
@@ -161,26 +145,22 @@ us easily log or emit anything we want.</p>
 <span class="keyword">rescue</span> <span class="constant">Exception</span> =&gt; e
   logger.error <span class="string"><span class="delimiter">&quot;</span><span class="content">[LOGGING ERROR] </span><span class="inline"><span class="inline-delimiter">#{</span>e.class<span class="inline-delimiter">}</span></span><span class="content">: </span><span class="inline"><span class="inline-delimiter">#{</span>e.message<span class="inline-delimiter">}</span></span><span class="char">\n</span><span class="inline"><span class="inline-delimiter">#{</span>e.backtrace.map{|l|  <span class="string"><span class="delimiter">&quot;</span><span class="content">  </span><span class="inline"><span class="inline-delimiter">#{</span>l<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>}.join(<span class="string"><span class="delimiter">&quot;</span><span class="char">\n</span><span class="delimiter">&quot;</span></span>)<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>
 <span class="keyword">end</span> </code></pre>
-</div>
-<div class="block p alpha">
+
  <p>These methods simply relay the call to <code>$ZMQ_LOGGER</code>, after adding
 <code>data.http.request-id</code> if not already present. They will also rescue any exception
 that may happen to prevent logging from causing a user-facing error. It can be
 debated whether or not emitting events is critical enough to produce a user-facing
 error, depending on what kind of events you're emitting.</p>
-</div>
-<div class="block header beta">
+
  <h2 id="logging-requests">Logging requests</h2>
-</div>
-<div class="block p beta">
+
  <p>Now that we're able to log messages from inside a controller, we can set up
 automatic logging of each request. This is pretty simple, we use a
 <code>before_filter</code> to simply <code>log_message</code> the data we want. With this approach,
 you can get most request data. That's already pretty good, there's lots of
 useful information in the request data. But it would be nice to have access
 to <em>everything</em>:</p>
-</div>
-<div class="block ul beta">
+
  <ul>
    <li>Request data: headers, parameters, body</li>
    <li>Response data: headers, status, body</li>
@@ -188,26 +168,21 @@ to <em>everything</em>:</p>
    <li>Rails also makes available which SQL queries were run and which templates
 were rendered, with the time it took for each to execute.</li>
  </ul>
-</div>
-<div class="block p delta">
+
  <p>It's already obvious that if we want response information, the <code>before_filter</code>
 won't work. So what about an <code>after_filter</code>? Turns out it's not so easy getting
 this information out of Rails, and it's time for some..</p>
-</div>
-<div class="block header gamma">
+
  <h3 id="invasive-surgery">Invasive surgery</h3>
-</div>
-<div class="block p alpha">
+
  <p>The information we want is in there somewhere, we just have to cut it open,
 figure out where it is and yank it out. With the help of a Rube Goldbergian
 setup using Rack middleware and Rails instrumentation, it's possible.</p>
-</div>
-<div class="block p alpha">
+
  <p>The response data is for some reason not accessible inside Rails, even in an
 <code>after_filter</code>. So we'll have to take a step back and go outside Rails to get
 it. This means add a Rack middleware around the call which captures the data.</p>
-</div>
-<div class="block codeblock alpha">
+
  <pre><code class="ruby"><span class="keyword">class</span> <span class="class">RequestInfoMiddleware</span>
 
 
@@ -241,8 +216,7 @@ it. This means add a Rack middleware around the call which captures the data.</p
 
 
 <span class="keyword">end</span> </code></pre>
-</div>
-<div class="block p alpha">
+
  <p>Simple enough. It sends the request down the stack for Rails to process it
 and captures the response. It even times how long it takes. But it doesn't
 actually log anything; it doesn't have access to all the information we want.
@@ -251,34 +225,28 @@ involve serializing it in special headers or something like that (must conform t
 Rack interface), and there was another reason why I didn't do that which I've
 since forgotten. The other option is to capture the response data and send it
 back down the stack to Rails, which has all the other data.</p>
-</div>
-<div class="block p gamma">
+
  <p>So what it does is add a Proc to the Rack <code>env</code> which, when run, adds a callback
 that will be run when the request has bubbled back up. This way, something
 further down the stack can register a callback to get the response data. I'm not
 sure whether this is kind of clever or the dumbest idea in the world, but it works.</p>
-</div>
-<div class="block p alpha">
+
  <p>To use this from somewhere further down in the stack, you'd register a listener
 like so:</p>
-</div>
-<div class="block codeblock beta">
+
  <pre><code class="ruby">env[<span class="string"><span class="delimiter">'</span><span class="content">zmq-logger.get-data</span><span class="delimiter">'</span></span>].call(-&gt;(data){
   <span class="comment"># Do stuff with data</span>
 }) </code></pre>
-</div>
-<div class="block p beta">
+
  <p>This callback would be called after the request was processed and a response had
 been sent upstream. In this way, it reaches quite uncomfortably down into
 something that is supposed to be done running.</p>
-</div>
-<div class="block p gamma">
+
  <p>Now, onto the other part of this hideous Rube Goldberg duo: Using Rails'
 instrumentation to get data about queries and renders. Given the nature of Rails'
 instrumentation, which uses a simple pub/sub implementation to publish data
 to those who are interested, it's time some more callback action.</p>
-</div>
-<div class="block codeblock beta">
+
  <pre><code class="ruby"><span class="keyword">class</span> <span class="class">InstrumentationDataGatherer</span>
 
   <span class="keyword">def</span> <span class="function">initialize</span>
@@ -333,36 +301,29 @@ to those who are interested, it's time some more callback action.</p>
 <span class="keyword">end</span>
 
 <span class="constant">InstrumentationDataGatherer</span>.new </code></pre>
-</div>
-<div class="block p delta">
+
  <p>This class, which goes in an initializer file, sets up listeners for relevant
 data, gathers it and relays it to its own listeners using a callback. It has to guess
 when a request starts and ends by looking at the events, and can not make the
 assumption that it is inside a request cycle at all (console, test run). To listen
 for this data, you'd use:</p>
-</div>
-<div class="block codeblock alpha">
+
  <pre><code class="ruby"><span class="constant">ActiveSupport</span>::<span class="constant">Notifications</span>.instrument(<span class="string"><span class="delimiter">'</span><span class="content">zmq-logger.call-me</span><span class="delimiter">'</span></span>, -&gt;(atts){
   <span class="comment"># Do stuff with atts</span>
 }) </code></pre>
-</div>
-<div class="block p gamma">
+
  <p>(I probably could have used Instrumentation's pub/sub functionality directly
 instead of adding another layer of callbacks, but hey, what's another callback!)</p>
-</div>
-<div class="block p alpha">
+
  <p>Now we finally have all the data we want, and we can take..</p>
-</div>
-<div class="block header gamma">
+
  <h3 id="another-look-at-request-logging">Another look at request logging</h3>
-</div>
-<div class="block p alpha">
+
  <p>We now have 2 callback mechanisms: From the Rack middleware and from the Rails
 instrumentation. If we register one callback with each, when both those
 have returned, it means we have all the data necessary to actually send away a
 log entry. So let's add a simple <code>before_filter</code> that sets up the callbacks.</p>
-</div>
-<div class="block codeblock beta">
+
  <pre><code class="ruby">before_filter <span class="symbol">:setup_logging</span>
 
 <span class="keyword">def</span> <span class="function">setup_logging</span>
@@ -378,12 +339,10 @@ log entry. So let's add a simple <code>before_filter</code> that sets up the cal
     log_request(instr, data) <span class="keyword">if</span> instr
   })
 <span class="keyword">end</span> </code></pre>
-</div>
-<div class="block p beta">
+
  <p>Now, when all the data is available, <code>log_request</code> will be called. Let's have a
 look at it.</p>
-</div>
-<div class="block codeblock beta">
+
  <pre><code class="ruby"><span class="keyword">def</span> <span class="function">log_request</span>(instr, mw)
   atts = {
     <span class="string"><span class="delimiter">'</span><span class="content">type</span><span class="delimiter">'</span></span> =&gt; <span class="string"><span class="delimiter">'</span><span class="content">request</span><span class="delimiter">'</span></span>,
@@ -427,18 +386,14 @@ look at it.</p>
 
   log_message(atts)
 <span class="keyword">end</span> </code></pre>
-</div>
-<div class="block p alpha">
+
  <p>Quite long, but all it does is extract the relevant data into a hash and send it to <code>log_message</code>.</p>
-</div>
-<div class="block header beta">
+
  <h2 id="logging-exceptions">Logging exceptions</h2>
-</div>
-<div class="block p gamma">
+
  <p>Logging exceptions is a lot simpler. We just need to wait for one to occur,
 then format it and throw it into the ether.</p>
-</div>
-<div class="block codeblock beta">
+
  <pre><code class="ruby">rescue_from <span class="constant">Exception</span>, <span class="key">with</span>: <span class="symbol">:handle_exception</span>
 
 <span class="keyword">def</span> <span class="function">handle_exception</span>(exception)
@@ -476,12 +431,10 @@ then format it and throw it into the ether.</p>
 
   log_message(atts)
 <span class="keyword">end</span> </code></pre>
-</div>
-<div class="block p gamma">
+
  <p>Simple enough. One thing we should add is a separate handler for
 <code>ActiveRecord::RecordNotFound</code> exceptions:</p>
-</div>
-<div class="block codeblock delta">
+
  <pre><code class="ruby">rescue_from <span class="constant">ActiveRecord</span>::<span class="constant">RecordNotFound</span>, <span class="symbol">:with</span> =&gt; <span class="symbol">:handle_not_found</span>
 
 <span class="keyword">def</span> <span class="function">handle_not_found</span>(exception)
@@ -499,29 +452,24 @@ then format it and throw it into the ether.</p>
   logger.error <span class="string"><span class="delimiter">&quot;</span><span class="content">[EXCEPTION LOGGING EXCEPTION] </span><span class="inline"><span class="inline-delimiter">#{</span>e.class<span class="inline-delimiter">}</span></span><span class="content">: </span><span class="inline"><span class="inline-delimiter">#{</span>e.message<span class="inline-delimiter">}</span></span><span class="char">\n</span><span class="inline"><span class="inline-delimiter">#{</span>e.backtrace.map{|l|  <span class="string"><span class="delimiter">&quot;</span><span class="content">  </span><span class="inline"><span class="inline-delimiter">#{</span>l<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>}.join(<span class="string"><span class="delimiter">&quot;</span><span class="char">\n</span><span class="delimiter">&quot;</span></span>)<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>
   render <span class="symbol">:text</span> =&gt; <span class="string"><span class="delimiter">&quot;</span><span class="content">Inxception :(</span><span class="delimiter">&quot;</span></span>
 <span class="keyword">end</span> </code></pre>
-</div>
-<div class="block header beta">
+
  <h2 id="code">Code</h2>
-</div>
-<div class="block p beta">
+
  <p>I've left quite a bit of code out here, which you can find in
 <a href="https://gist.github.com/toretore/5943700">this gist</a>.</p>
-</div>
-<div class="block header beta">
+
  <h2 id="doing-something-useful-with-the-data">Doing something useful with the data</h2>
-</div>
-<div class="block p alpha">
+
  <p>I've only shown you how to gather and publish the data. If you don't create
 that PULL socket, it's not going anywhere.</p>
-</div>
-<div class="block p beta">
+
  <p>What you do with it is up to you. I take all the log messages and shove them
 into ElasticSearch, the code for which can be found
 <a href="https://gist.github.com/toretore/5943700#file-zmq-elasticsearch-logger-rb">here</a>.
 You will notice that it connects to something called 'ZMQ FAN'; this is just a
 little process that runs on each machine that gathers all the messages from the
 PULL socket and published them (fans them out) on a PUB socket.</p>
-</div>
+
 
       </div>
     </div>

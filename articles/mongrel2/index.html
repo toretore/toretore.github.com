@@ -3,8 +3,11 @@
   <head>
     <meta charset="utf-8">
     <title>Blag: Exploring Mongrel2 handlers with Ruby</title>
-    <link rel="stylesheet" href="/stylesheets/main.css">
-    <link rel="stylesheet" href="/stylesheets/coderay.css">
+    
+      <link rel="stylesheet" href="/stylesheets/coderay.135e3e1b6cc4bef562b61f21fdbfb62997c41481.css">
+    
+      <link rel="stylesheet" href="/stylesheets/main.7a63588b33223094f547634357b56847af8af897.css">
+    
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
   </head>
   <body class="regular">
@@ -17,49 +20,38 @@
         <div class="block"><h1>Exploring Mongrel2 handlers with Ruby</h1></div>
 
 
-<div class="block p gamma">
  <p>Unlike the original Mongrel, which was written in Ruby, for Ruby, Mongrel2 uses ZeroMQ
 as a communication channel between it and the request handlers. It is thus "language
 agnostic": If you can use ZeroMQ sockets, you can write a Mongrel2 handler.</p>
-</div>
-<div class="block p delta">
+
  <p>In this article, we'll explore how to interact with Mongrel2 from a Ruby handler.</p>
-</div>
-<div class="block header gamma">
+
  <h2 id="prerequisites">Prerequisites</h2>
-</div>
-<div class="block p gamma">
+
  <p>You'll need to install ZeroMQ and Mongrel2. If you're using Homebrew, you can simply</p>
-</div>
-<div class="block codeblock delta">
+
  <pre><code class="text">brew install zeromq
 brew install mongrel2 </code></pre>
-</div>
-<div class="block p delta">
+
  <p>I'm going to be using EventMachine on Ruby 1.9 in this article, with the following gems:</p>
-</div>
-<div class="block ul delta">
+
  <ul>
    <li>eventmachine</li>
    <li>em-zeromq</li>
    <li>json</li>
    <li>em-websocket</li>
  </ul>
-</div>
-<div class="block p delta">
+
  <p>You don't have to use EventMachine, there are <a href="http://www.zeromq.org/bindings:ruby">zmq</a> and
 <a href="http://www.zeromq.org/bindings:ruby-ffi">ffi-rzmq</a> gems, and swapping out the EM parts should
 be trivial.</p>
-</div>
-<div class="block header alpha">
+
  <h2 id="how-mongrel2-handlers-work">How Mongrel2 handlers work</h2>
-</div>
-<div class="block p delta">
+
  <p>Mongrel2 communicates with handlers using ZeroMQ sockets. One socket pair is responsible for
 sending requests from the server to the handler, and another pair for sending responses from
 the handler to the server.</p>
-</div>
-<div class="block codeblock delta">
+
  <pre><code class="text">+-------------------+              +--------------------+
 |      Server       |              |       Handler      |
 |                   |              |                    |
@@ -71,30 +63,25 @@ the handler to the server.</p>
 | |    [SUB]     |&lt;-|-- Response --|--|    [PUB]     |  |
 | +--------------+  |              |  +--------------+  |
 +-------------------+              +--------------------+ </code></pre>
-</div>
-<div class="block p gamma">
+
  <p>The server uses a PUSH socket to publish requests, that will be picked up by one of the handlers
 listening with a PULL socket on the other end. When the handler is done processing the request,
 it publishes the response on a PUB socket. The server will then receive the response on its SUB
 socket and send it to the HTTP client.</p>
-</div>
-<div class="block p gamma">
+
  <p>This setup allows a N-N topology where several servers can communicate with several handlers. The
 PUSH&lt;&gt;PULL for requests lets one or more servers publish requests that will be fairly distributed
 among one or more handlers. When a server publishes a request, it includes its unique ID (UUID), and
 it also subscribes to this UUID on its SUB socket. The handler then publishes the response on its
 PUB socket, using the UUID of the originating server as the key, thus only the server that's
 subscribed to that key will receive the response.</p>
-</div>
-<div class="block header alpha">
+
  <h2 id="configuring-mongrel2">Configuring Mongrel2</h2>
-</div>
-<div class="block p delta">
+
  <p>Before we can start writing the handler, we need to set up Mongrel2. Mongrel2 uses an SQLite
 database for its configuration, which can seem a little strange, but the reason behind it is
 to make the configuration programmable. For now, you can just copy this into a file:</p>
-</div>
-<div class="block codeblock gamma">
+
  <pre><code class="python">handler = Handler(
   send_spec = <span class="string"><span class="delimiter">&quot;</span><span class="content">tcp://*:9999</span><span class="delimiter">&quot;</span></span>,
   send_ident = <span class="string"><span class="delimiter">&quot;</span><span class="content">7B0A2BF9-0DB2-4FEB-AD90-75C649B859FC</span><span class="delimiter">&quot;</span></span>,
@@ -119,38 +106,28 @@ main = Server(
 )
 
 servers = [main] </code></pre>
-</div>
-<div class="block p alpha">
+
  <p><a href="https://gist.github.com/toretore/35eb74a2cac3f214fd4b#file-mongrel2_config-py">View file on Gist</a></p>
-</div>
-<div class="block p delta">
+
  <p>Then load the configuration into SQLite with:</p>
-</div>
-<div class="block codeblock gamma">
+
  <pre><code class="text">m2sh load -config filename </code></pre>
-</div>
-<div class="block p gamma">
+
  <p>This sets up an HTTP server running on localhost:6767, using a handler which receives requests
 on tcp://*:9999 and sends responses on tcp://*:9998.</p>
-</div>
-<div class="block p delta">
+
  <p>Start the server:</p>
-</div>
-<div class="block codeblock alpha">
+
  <pre><code class="text">m2sh start -name test </code></pre>
-</div>
-<div class="block p gamma">
+
  <p>If you want to know more about Mongrel2's overall structure and configuration, the
 <a href="http://mongrel2.org/manual/book-finalch4.html#x6-210003">guide</a> covers that.</p>
-</div>
-<div class="block header gamma">
+
  <h2 id="getting-to-know-mongrel2">Getting to know Mongrel2</h2>
-</div>
-<div class="block p delta">
+
  <p>Ok, let's get to some code. We'll start by creating the handler's PULL and PUB sockets, connecting
 them to the TCP ports from the config.</p>
-</div>
-<div class="block codeblock gamma">
+
  <pre><code class="ruby">require <span class="string"><span class="delimiter">'</span><span class="content">eventmachine</span><span class="delimiter">'</span></span>
 require <span class="string"><span class="delimiter">'</span><span class="content">em-zeromq</span><span class="delimiter">'</span></span>
 require <span class="string"><span class="delimiter">'</span><span class="content">json</span><span class="delimiter">'</span></span>
@@ -170,42 +147,31 @@ require <span class="string"><span class="delimiter">'</span><span class="conten
   <span class="comment"># The rest of the handler's code goes here</span>
 
 <span class="keyword">end</span><span class="comment">#EM.run</span> </code></pre>
-</div>
-<div class="block p delta">
+
  <p>Now we're listening for messages on our PULL socket and we have a PUB socket on which we
 can send responses. I'm not going to include this code in the examples that follow, just
 assume that the code goes where the comment says above.</p>
-</div>
-<div class="block p alpha">
+
  <p>First, let's just see what Mongrel2 is sending to our PULL socket.</p>
-</div>
-<div class="block codeblock beta">
+
  <pre><code class="ruby">requests.on <span class="symbol">:message</span> <span class="keyword">do</span> |message|
   puts message.copy_out_string
 <span class="keyword">end</span> </code></pre>
-</div>
-<div class="block p delta">
+
  <p>We're just printing whatever is getting sent to STDOUT. Start the program,</p>
-</div>
-<div class="block codeblock beta">
+
  <pre><code class="text">ruby handler.rb </code></pre>
-</div>
-<div class="block p beta">
+
  <p>and send Mongrel2 a request using curl or similar:</p>
-</div>
-<div class="block codeblock alpha">
+
  <pre><code class="text">curl http://localhost:6767/ </code></pre>
-</div>
-<div class="block p alpha">
+
  <p>(Your curl will just hang because we're not sending a response yet, just Ctrl-C it)</p>
-</div>
-<div class="block p delta">
+
  <p>And you'll see something like this printed out from the handler process:</p>
-</div>
-<div class="block codeblock beta">
+
  <pre><code class="text">7B0A2BF9-0DB2-4FEB-AD90-75C649B859FC 4 / 238:{&quot;PATH&quot;:&quot;/&quot;,&quot;x-forwarded-for&quot;:&quot;127.0.0.1&quot;,&quot;accept&quot;:&quot;*/*&quot;,&quot;user-agent&quot;:&quot;curl/7.21.4 (universal-apple-darwin11.0) libcurl/7.21.4 OpenSSL/0.9.8r zlib/1.2.5&quot;,&quot;host&quot;:&quot;localhost:6767&quot;,&quot;METHOD&quot;:&quot;GET&quot;,&quot;VERSION&quot;:&quot;HTTP/1.1&quot;,&quot;URI&quot;:&quot;/&quot;,&quot;PATTERN&quot;:&quot;/&quot;},0:, </code></pre>
-</div>
-<div class="block p delta">
+
  <p>Well, that's kinda weird. Some of it is obviously JSON, but what about the rest of it?
 If you look at the UUID at the start of the message, you'll see that it's the same one
 we used on the handler's <code>send_ident</code> in the config. It just tells us where this request
@@ -213,41 +179,31 @@ is coming from. The 1 right after it is the request ID, so Mongrel2 knows which 
 send the response to, and after that is the path the client requested. Everything after
 that is encoded as <a href="http://cr.yp.to/proto/netstrings.txt">netstrings</a>. So, each request
 uses this pattern:</p>
-</div>
-<div class="block codeblock alpha">
+
  <pre><code class="text">[UUID] [Request ID] [Path] [Netstrings] </code></pre>
-</div>
-<div class="block p gamma">
+
  <p>That is, four parts separated by spaces. That should be pretty easy to parse:</p>
-</div>
-<div class="block codeblock gamma">
+
  <pre><code class="ruby">requests.on <span class="symbol">:message</span> <span class="keyword">do</span> |msg|
   p msg.copy_out_string.split(<span class="string"><span class="delimiter">'</span><span class="content"> </span><span class="delimiter">'</span></span>, <span class="integer">4</span>) <span class="comment">#Limit to 4 items, i.e. stop when we get to the netstrings</span>
 <span class="keyword">end</span> </code></pre>
-</div>
-<div class="block p beta">
+
  <p>Send it another request:</p>
-</div>
-<div class="block codeblock alpha">
+
  <pre><code class="text">curl http://localhost:6767/foo </code></pre>
-</div>
-<div class="block p delta">
+
  <p>And the handler prints:</p>
-</div>
-<div class="block codeblock gamma">
+
  <pre><code class="text">[&quot;7B0A2BF9-0DB2-4FEB-AD90-75C649B859FC&quot;, &quot;2&quot;, &quot;/foo&quot;, &quot;244:{\&quot;PATH\&quot;:\&quot;/foo\&quot;,\&quot;x-forwarded-for\&quot;:\&quot;127.0.0.1\&quot;,\&quot;accept\&quot;:\&quot;*/*\&quot;,\&quot;user-agent\&quot;:\&quot;curl/7.21.4 (universal-apple-darwin11.0) libcurl/7.21.4 OpenSSL/0.9.8r zlib/1.2.5\&quot;,\&quot;host\&quot;:\&quot;localhost:6767\&quot;,\&quot;METHOD\&quot;:\&quot;GET\&quot;,\&quot;VERSION\&quot;:\&quot;HTTP/1.1\&quot;,\&quot;URI\&quot;:\&quot;/foo\&quot;,\&quot;PATTERN\&quot;:\&quot;/\&quot;},0:,&quot;] </code></pre>
-</div>
-<div class="block p beta">
+
  <p>You might be thinking, "Well, this is obviously broken, what if the path has spaces in it?".
 Well, Mongrel2 has solved this problem by decreeing that <em>paths may not have spaces in them</em>. It
 will reject any requests that do not follow this rule.</p>
-</div>
-<div class="block p gamma">
+
  <p>So, now we have the UUID, the request ID, the path and the netstrings. Netstrings are
 very simple (a number telling us how many bytes in the string, a colon,then the string,
 and a comma), so we'll just write a quick and dirty parser:</p>
-</div>
-<div class="block codeblock alpha">
+
  <pre><code class="ruby">requests.on <span class="symbol">:message</span> <span class="keyword">do</span> |msg|
   uuid, id, path, rest =  msg.copy_out_string.split(<span class="string"><span class="delimiter">'</span><span class="content"> </span><span class="delimiter">'</span></span>, <span class="integer">4</span>)
 
@@ -265,133 +221,104 @@ and a comma), so we'll just write a quick and dirty parser:</p>
   p headers
   p body
 <span class="keyword">end</span> </code></pre>
-</div>
-<div class="block p alpha">
+
  <p>As you can see, there are two netstrings in a request. The first is a JSON representation of
 the request headers and the second is the HTTP body (possibly an empty string). We can now
 extend our description of the request message to include the netstrings:</p>
-</div>
-<div class="block codeblock delta">
+
  <pre><code class="text">[UUID] [Request ID] [Path] [Netstring - HTTP headers as JSON],[Netstring - HTTP body], </code></pre>
-</div>
-<div class="block p alpha">
+
  <p>Send the request again:</p>
-</div>
-<div class="block codeblock beta">
+
  <pre><code class="text">curl http://localhost:6767/foo
 
 {&quot;PATH&quot;=&gt;&quot;/foo&quot;, &quot;x-forwarded-for&quot;=&gt;&quot;127.0.0.1&quot;, &quot;accept&quot;=&gt;&quot;*/*&quot;, &quot;user-agent&quot;=&gt;&quot;curl/7.21.4 (universal-apple-darwin11.0) libcurl/7.21.4 OpenSSL/0.9.8r zlib/1.2.5&quot;, &quot;host&quot;=&gt;&quot;localhost:6767&quot;, &quot;METHOD&quot;=&gt;&quot;GET&quot;, &quot;VERSION&quot;=&gt;&quot;HTTP/1.1&quot;, &quot;URI&quot;=&gt;&quot;/foo&quot;, &quot;PATTERN&quot;=&gt;&quot;/&quot;}
 &quot;&quot; </code></pre>
-</div>
-<div class="block p delta">
+
  <p>With a body:</p>
-</div>
-<div class="block codeblock gamma">
+
  <pre><code class="text">curl -XPOST -d&quot;It's the way of the road, buddy.&quot; http://localhost:6767/
 
 {&quot;PATH&quot;=&gt;&quot;/&quot;, &quot;x-forwarded-for&quot;=&gt;&quot;127.0.0.1&quot;, &quot;content-type&quot;=&gt;&quot;application/x-www-form-urlencoded&quot;, &quot;content-length&quot;=&gt;&quot;32&quot;, &quot;accept&quot;=&gt;&quot;*/*&quot;, &quot;user-agent&quot;=&gt;&quot;curl/7.21.4 (universal-apple-darwin11.0) libcurl/7.21.4 OpenSSL/0.9.8r zlib/1.2.5&quot;, &quot;host&quot;=&gt;&quot;localhost:6767&quot;, &quot;METHOD&quot;=&gt;&quot;POST&quot;, &quot;VERSION&quot;=&gt;&quot;HTTP/1.1&quot;, &quot;URI&quot;=&gt;&quot;/&quot;, &quot;PATTERN&quot;=&gt;&quot;/&quot;}
 &quot;It's the way of the road, buddy. </code></pre>
-</div>
-<div class="block header delta">
+
  <h2 id="responses">Responses</h2>
-</div>
-<div class="block p gamma">
+
  <p>Now that we've got the requests, let's get to responding. The response message is similar to
 the request message. It includes the UUID of the server, the client ID and the HTTP response.</p>
-</div>
-<div class="block codeblock alpha">
+
  <pre><code class="text">[UUID] [Netstring: client IDs] [HTTP response] </code></pre>
-</div>
-<div class="block p beta">
+
  <p>Let's add a response to our test code:</p>
-</div>
-<div class="block codeblock gamma">
+
  <pre><code class="ruby">response_body = <span class="string"><span class="delimiter">'</span><span class="content">Hello, Mongrel2!</span><span class="delimiter">'</span></span>
 response_body = <span class="string"><span class="delimiter">&quot;</span><span class="content">HTTP/1.1 200 OK</span><span class="char">\r</span><span class="char">\n</span><span class="content">Connection: close</span><span class="char">\r</span><span class="char">\n</span><span class="content">Content-Length: </span><span class="inline"><span class="inline-delimiter">#{</span>response_body.bytesize<span class="inline-delimiter">}</span></span><span class="char">\r</span><span class="char">\n</span><span class="char">\r</span><span class="char">\n</span><span class="inline"><span class="inline-delimiter">#{</span>response_body<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>
 response = <span class="string"><span class="delimiter">'</span><span class="content">%s %d:%s, %s</span><span class="delimiter">'</span></span> % [uuid, id.size, id, response_body]
 responses.send_msg(response) </code></pre>
-</div>
-<div class="block p beta">
+
  <p>That's it. We have a fully functional Mongrel2 HTTP handler. Let's try curling it again, and enjoy
 not seeing it hang as it's waiting for a response that never arrives:</p>
-</div>
-<div class="block codeblock delta">
+
  <pre><code class="text">curl -i http://localhost:6767/
 HTTP/1.1 200 OK
 Connection: close
 Content-Length: 16
 
 Hello, Mongrel2! </code></pre>
-</div>
-<div class="block p delta">
+
  <p><a href="https://gist.github.com/toretore/35eb74a2cac3f214fd4b#file-simple_handler-rb">View entire handler on Gist</a></p>
-</div>
-<div class="block header delta">
+
  <h2 id="server-sent-eventseventsource">Server-Sent Events/EventSource</h2>
-</div>
-<div class="block p gamma">
+
  <p>If you look closely at the response message definition above, you'll see that I used plural
 "client IDs" in the netstring part. A handler can respond to more than one client; this is useful
 for example in keep-alive connections where you want to send data to several clients listening
 on their persistent HTTP connections. One use for this is Server-Sent Events (SSE), which is a
 simple protocol for pushing events from a server to listening clients. An event looks like this:</p>
-</div>
-<div class="block codeblock gamma">
+
  <pre><code class="text">data: Text </code></pre>
-</div>
-<div class="block p delta">
+
  <p>Each event is followed by two newlines (\r\n\r\n), and may include lines for event ID and event type:</p>
-</div>
-<div class="block codeblock gamma">
+
  <pre><code class="text">id: 3
 event: message
 data: Hello my friend,
 data: how are you? </code></pre>
-</div>
-<div class="block p delta">
+
  <p>Each line is terminated by \r\n, and there may be several data lines. The JavaScript EventSource
 implementation concatenates all data lines together as if it's a single multiline message.</p>
-</div>
-<div class="block p gamma">
+
  <p>Let's convert out handler to become a simple source of SSEs. The server will simply emit a neverending
 source of events containing a counter that is increased by one for each time:</p>
-</div>
-<div class="block codeblock beta">
+
  <pre><code class="text">event: counter
 data: 1
 
 event: counter
 data: 2 </code></pre>
-</div>
-<div class="block p delta">
+
  <p>And so on.</p>
-</div>
-<div class="block p gamma">
+
  <p>The HTTP 1.1 specification says that a connection is to be regarded as persistent unless otherwise
 is stated (by the use of the Connection: close and Content-Length headers). SSE just build on that
 and defines the <code>text/event-stream</code> MIME type, telling a compatible client that this is an event
 stream. Let's change our handler to return (or leave out) the appropriate headers.</p>
-</div>
-<div class="block codeblock delta">
+
  <pre><code class="ruby">response_headers = {<span class="string"><span class="delimiter">'</span><span class="content">Content-Type</span><span class="delimiter">'</span></span> =&gt; <span class="string"><span class="delimiter">'</span><span class="content">text/event-stream</span><span class="delimiter">'</span></span>}
 response_body = <span class="string"><span class="delimiter">&quot;</span><span class="content">HTTP/1.1 200 OK</span><span class="char">\r</span><span class="char">\n</span><span class="inline"><span class="inline-delimiter">#{</span>response_headers.map{|k,v| <span class="string"><span class="delimiter">&quot;</span><span class="inline"><span class="inline-delimiter">#{</span>k<span class="inline-delimiter">}</span></span><span class="content">: </span><span class="inline"><span class="inline-delimiter">#{</span>v<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span> }.join(<span class="string"><span class="delimiter">&quot;</span><span class="char">\r</span><span class="char">\n</span><span class="delimiter">&quot;</span></span>)<span class="inline-delimiter">}</span></span><span class="char">\r</span><span class="char">\n</span><span class="char">\r</span><span class="char">\n</span><span class="delimiter">&quot;</span></span>
 response = <span class="string"><span class="delimiter">'</span><span class="content">%s %d:%s, %s</span><span class="delimiter">'</span></span> % [uuid, id.size, id, response_body]
 responses.send_msg(response) </code></pre>
-</div>
-<div class="block p delta">
+
  <p>The client will now hang on to the connection, waiting for events to be pushed. To be able to push
 events to all connected clients, we need to keep track of who's connected. Add an array above the
 code responsible for listening to requests:</p>
-</div>
-<div class="block codeblock beta">
+
  <pre><code class="ruby">clients = []
 requests.on <span class="symbol">:message</span> <span class="keyword">do</span> |msg|
   <span class="comment">#...</span> </code></pre>
-</div>
-<div class="block p beta">
+
  <p>Then, swap out the response code from above with this:</p>
-</div>
-<div class="block codeblock delta">
+
  <pre><code class="ruby"><span class="keyword">if</span> headers[<span class="string"><span class="delimiter">'</span><span class="content">METHOD</span><span class="delimiter">'</span></span>] == <span class="string"><span class="delimiter">'</span><span class="content">JSON</span><span class="delimiter">'</span></span> &amp;&amp; <span class="constant">JSON</span>.parse(body)[<span class="string"><span class="delimiter">'</span><span class="content">type</span><span class="delimiter">'</span></span>] == <span class="string"><span class="delimiter">'</span><span class="content">disconnect</span><span class="delimiter">'</span></span>
   clients.delete(id)
   puts <span class="string"><span class="delimiter">&quot;</span><span class="content">Client </span><span class="inline"><span class="inline-delimiter">#{</span>id<span class="inline-delimiter">}</span></span><span class="content"> disconnected (</span><span class="inline"><span class="inline-delimiter">#{</span>clients.size<span class="inline-delimiter">}</span></span><span class="content"> clients left)</span><span class="delimiter">&quot;</span></span>
@@ -405,18 +332,14 @@ requests.on <span class="symbol">:message</span> <span class="keyword">do</span>
 
   puts <span class="string"><span class="delimiter">&quot;</span><span class="content">Client </span><span class="inline"><span class="inline-delimiter">#{</span>id<span class="inline-delimiter">}</span></span><span class="content"> connected (currently </span><span class="inline"><span class="inline-delimiter">#{</span>clients.size<span class="inline-delimiter">}</span></span><span class="content"> clients)</span><span class="delimiter">&quot;</span></span>
 <span class="keyword">end</span> </code></pre>
-</div>
-<div class="block p alpha">
+
  <p>When a client disconnects, Mongrel2 sends a special message containing a JSON body and a single
 <code>METHOD</code> header. The JSON contains a single entry:</p>
-</div>
-<div class="block codeblock gamma">
+
  <pre><code class="json">{<span class="key"><span class="delimiter">&quot;</span><span class="content">type</span><span class="delimiter">&quot;</span></span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">disconnect</span><span class="delimiter">&quot;</span></span>} </code></pre>
-</div>
-<div class="block p delta">
+
  <p>We check for that and remove the client ID from the list.</p>
-</div>
-<div class="block p beta">
+
  <p>If it's a regular request, i.e. the initial connection has been made, add the client ID
 to the list and send the appropriate SSE headers. Now we have the client's ID and the
 client knows to expect events from us. To generate events, we're just going to add an
@@ -424,8 +347,7 @@ interval timer that sends messages on the response PUB socket just like a regula
 This interval must be placed outside the request handling code, otherwise a new interval
 would be started for each new connection, but we only want a single interval that publishes
 to all clients.</p>
-</div>
-<div class="block codeblock alpha">
+
  <pre><code class="ruby"><span class="keyword">end</span> <span class="comment">#End of request handling code: requests.on :message do |msg|</span>
 
 c = <span class="integer">0</span>
@@ -434,18 +356,15 @@ c = <span class="integer">0</span>
   ids = clients.join(<span class="string"><span class="delimiter">'</span><span class="content"> </span><span class="delimiter">'</span></span>)
   responses.send_msg(<span class="string"><span class="delimiter">'</span><span class="content">%s %d:%s, %s</span><span class="delimiter">'</span></span> % [<span class="string"><span class="delimiter">'</span><span class="content">7B0A2BF9-0DB2-4FEB-AD90-75C649B859FC</span><span class="delimiter">'</span></span>, ids.size, ids, event])
 <span class="keyword">end</span> </code></pre>
-</div>
-<div class="block p alpha">
+
  <p>It simply concatenates all client IDs and adds it as a netstring between the server UUID and the event data.
 The event data is simple: An event type ("counter") and the payload (c += 1). The server's UUID is the one
 from the send_ident in our handler config, and I've just hardcoded it for this example. We could keep lists
 of clients for each server and publish the events to all servers, but this is good enough for now, we
 only have this one server.</p>
-</div>
-<div class="block p alpha">
+
  <p>Fire up the handler again and initiate a couple of connections with curl:</p>
-</div>
-<div class="block codeblock delta">
+
  <pre><code class="text">curl -i http://localhost:6767/
 HTTP/1.1 200 OK
 Content-Type: text/event-stream
@@ -455,36 +374,29 @@ data: 3
 
 event: counter
 data: 4 </code></pre>
-</div>
-<div class="block p gamma">
+
  <p>You can connect multiple clients and they will all receive the same data. If you look at the handler's
 STDOUT, you'll see it keeps track of clients connecting and disconnecting:</p>
-</div>
-<div class="block codeblock alpha">
+
  <pre><code class="text">Client 52 connected (currently 1 clients)
 Client 53 connected (currently 2 clients)
 Client 52 disconnected (1 clients left)
 Client 53 disconnected (0 clients left) </code></pre>
-</div>
-<div class="block p delta">
+
  <p>If you disconnect and connect again later, you'll notice the counter has kept increasing in the meantime.
 The handler will just emit these events once a second, and listening clients will receive them. If no
 clients are listening, Mongrel2 discards them. Actually, we'll be sending invalid responses to Mongrel2
 since they won't have any client IDs. It would be polite to simply not send it to Mongrel2 if the clients
 array is empty.</p>
-</div>
-<div class="block p alpha">
+
  <p><a href="https://gist.github.com/toretore/35eb74a2cac3f214fd4b#file-sse_handler-rb">View the entire SSE handler on Gist</a></p>
-</div>
-<div class="block header delta">
+
  <h2 id="websockets">WebSockets</h2>
-</div>
-<div class="block p gamma">
+
  <p>Server-Sent Events are great. But they do have one limitation - they're one way only, a client can't send
 messages back to the server. WebSockets is an alternative protocol for two-way communication. It's a
 little more involved than SSE, and getting it to work through Mongrel2 isn't straight forward.</p>
-</div>
-<div class="block p beta">
+
  <p>Mongrel2 supports WebSockets. Kind of. WebSockets isn't built with HTTP: It pretends to be an HTTP
 connection at first, which is then "upgraded" to WebSockets. There are many different versions of
 the WebSockets specification, and Mongrel2 only supports the latest, version 13. Mongrel2 will
@@ -495,11 +407,9 @@ for this article I don't want to get into creating WebSocket frames so we're goi
 in place which will take care of it for us. <a href="https://github.com/igrigorik/em-websocket">em-websocket</a>
 is a WebSockets implementation for EventMachine, and you can easily start a WS server using it. But
 we want to go through Mongrel2, so we're going to shoehorn it into our Handler.</p>
-</div>
-<div class="block p delta">
+
  <p>Let's replace the request handling code once again with this:</p>
-</div>
-<div class="block codeblock gamma">
+
  <pre><code class="ruby"><span class="keyword">if</span> headers[<span class="string"><span class="delimiter">'</span><span class="content">METHOD</span><span class="delimiter">'</span></span>] == <span class="string"><span class="delimiter">'</span><span class="content">WEBSOCKET_HANDSHAKE</span><span class="delimiter">'</span></span>
   clients[id] = {<span class="key">websocket</span>: <span class="constant">EM</span>::<span class="constant">WebSocket</span>::<span class="constant">Connection</span>.new(id, {})}
   (<span class="keyword">class</span> &lt;&lt; <span class="class">clients</span>[id][<span class="symbol">:websocket</span>];<span class="predefined-constant">self</span>;<span class="keyword">end</span>).send(<span class="symbol">:define_method</span>, <span class="symbol">:send_data</span>){|d| responses.send_msg(<span class="string"><span class="delimiter">'</span><span class="content">%s %d:%s, %s</span><span class="delimiter">'</span></span> % [uuid, id.size, id, d]) }
@@ -509,11 +419,9 @@ we want to go through Mongrel2, so we're going to shoehorn it into our Handler.<
 <span class="keyword">elsif</span> headers[<span class="string"><span class="delimiter">'</span><span class="content">METHOD</span><span class="delimiter">'</span></span>] == <span class="string"><span class="delimiter">'</span><span class="content">WEBSOCKET</span><span class="delimiter">'</span></span>
   puts <span class="string"><span class="delimiter">&quot;</span><span class="content">Received WS message: </span><span class="inline"><span class="inline-delimiter">#{</span>body<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>
 <span class="keyword">end</span> </code></pre>
-</div>
-<div class="block p beta">
+
  <p>I said it's a hack, remember?</p>
-</div>
-<div class="block p alpha">
+
  <p>Mongrel2 will detect an incoming WebSockets (v13) connection and set the <code>METHOD</code> header to
 <code>WEBSOCKET_HANDSHAKE</code>. This is the initial connection where HTTP is upgraded to WebSockets. We're
 going to let em-websocket take care of handling the connection by making it believe it's getting its
@@ -522,37 +430,30 @@ data from EventMachine. We instantiate a <code>EM::WebSocket::Connection</code>,
 the <code>clients</code> hash (which used to be an array, you're going to have to change that). Then we give it
 the incoming data so that it can respond to the handshake appropriately. From now on, we have a
 full-duplex WebSocket connection.</p>
-</div>
-<div class="block p alpha">
+
  <p>Now, Mongrel2 is still going to decode incoming messages, putting the message payload in the body.
 This is fine, as we've only redirected the connection's <code>send_data</code>, which we will be using
 whenever we want to send a message to the client. When Mongrel2 receives a message after the
 initial handshake, it will set <code>METHOD</code> to <code>WEBSOCKET</code>.</p>
-</div>
-<div class="block p gamma">
+
  <p>To test out your WebSocket, you can use the console in a browser which supports the latest version,
 like Chrome 25:</p>
-</div>
-<div class="block codeblock gamma">
+
  <pre><code class="javascript"><span class="keyword">var</span> socket = <span class="keyword">new</span> WebSocket(<span class="string"><span class="delimiter">'</span><span class="content">ws://localhost:6767/</span><span class="delimiter">'</span></span>)
 socket.<span class="function">onmessage</span> = <span class="keyword">function</span>(msg){ console.log(msg); }
 socket.send(<span class="string"><span class="delimiter">'</span><span class="content">Hello Mongrel2 from a WebSocket!</span><span class="delimiter">'</span></span>); </code></pre>
-</div>
-<div class="block p beta">
+
  <p>To send something back:</p>
-</div>
-<div class="block codeblock beta">
+
  <pre><code class="ruby"><span class="comment">#...</span>
 <span class="keyword">elsif</span> headers[<span class="string"><span class="delimiter">'</span><span class="content">METHOD</span><span class="delimiter">'</span></span>] == <span class="string"><span class="delimiter">'</span><span class="content">WEBSOCKET</span><span class="delimiter">'</span></span>
   puts <span class="string"><span class="delimiter">&quot;</span><span class="content">Received WS message: </span><span class="inline"><span class="inline-delimiter">#{</span>body<span class="inline-delimiter">}</span></span><span class="delimiter">&quot;</span></span>
   clients[id][<span class="symbol">:websocket</span>].send(<span class="string"><span class="delimiter">'</span><span class="content">Hello yourself, browser!</span><span class="delimiter">'</span></span>)
 <span class="keyword">end</span> </code></pre>
-</div>
-<div class="block p gamma">
+
  <p>If you spy on the TCP port while creating the WebSocket on the client, you'll see the "HTTP"
 handshake:</p>
-</div>
-<div class="block codeblock delta">
+
  <pre><code class="text">GET / HTTP/1.1
 Upgrade: websocket
 Connection: Upgrade
@@ -568,20 +469,16 @@ HTTP/1.1 101 Switching Protocols
 Upgrade: websocket
 Connection: Upgrade
 Sec-WebSocket-Accept: cqPlq0VWCRTVSpdkbcqHUeWNhU8= </code></pre>
-</div>
-<div class="block p alpha">
+
  <p>After this you'll see how it's switched to WebSockets' binary protocol.</p>
-</div>
-<div class="block header beta">
+
  <h2 id="the-chat-example">The chat example</h2>
-</div>
-<div class="block p alpha">
+
  <p>No asynchronous messaging article would be complete without the ubiquitous chat example. We'll keep
 it simple and only implement a simple JSON protocol without any real UI. Now that we have the WebSocket
 up and running we can just alter the code slightly to show how it can be used for communication among
 several peers through a central server (our handler).</p>
-</div>
-<div class="block codeblock alpha">
+
  <pre><code class="ruby"><span class="keyword">if</span> headers[<span class="string"><span class="delimiter">'</span><span class="content">METHOD</span><span class="delimiter">'</span></span>] == <span class="string"><span class="delimiter">'</span><span class="content">WEBSOCKET_HANDSHAKE</span><span class="delimiter">'</span></span>
   clients[id] = {<span class="key">websocket</span>: <span class="constant">EM</span>::<span class="constant">WebSocket</span>::<span class="constant">Connection</span>.new(id, {})}
   (<span class="keyword">class</span> &lt;&lt; <span class="class">clients</span>[id][<span class="symbol">:websocket</span>];<span class="predefined-constant">self</span>;<span class="keyword">end</span>).send(<span class="symbol">:define_method</span>, <span class="symbol">:send_data</span>){|d| responses.send_msg(<span class="string"><span class="delimiter">'</span><span class="content">%s %d:%s, %s</span><span class="delimiter">'</span></span> % [uuid, id.size, id, d]) }
@@ -603,15 +500,13 @@ several peers through a central server (our handler).</p>
   response_body = <span class="string"><span class="delimiter">&quot;</span><span class="content">HTTP/1.1 418 I'm a teapot</span><span class="char">\r</span><span class="char">\n</span><span class="content">Content-Length: 0</span><span class="char">\r</span><span class="char">\n</span><span class="content">Connection: close</span><span class="char">\r</span><span class="char">\n</span><span class="char">\r</span><span class="char">\n</span><span class="content">Not really, I'm a WebSocket</span><span class="delimiter">&quot;</span></span>
   responses.send_msg(<span class="string"><span class="delimiter">'</span><span class="content">%s %d:%s, %s</span><span class="delimiter">'</span></span> % [uuid, id.size, id, response_body])
 <span class="keyword">end</span> </code></pre>
-</div>
-<div class="block p alpha">
+
  <p>The handshake part is still the same. Our JSON protocol uses a <code>type</code> attribute to signify what kind
 of message we're dealing with; one <code>join</code> message with a <code>name</code> attribute and a <code>message</code> message
 with a (you guessed it) <code>message</code> and a <code>name</code> attribute. Our response handler distributes each message among its
 connected clients, who choose what action to take. You can initiate a chat using the browser console
 with two sockets:</p>
-</div>
-<div class="block codeblock gamma">
+
  <pre><code class="javascript"><span class="keyword">var</span> <span class="function">client</span> = <span class="keyword">function</span>(name){
   <span class="keyword">var</span> socket = <span class="keyword">new</span> WebSocket(<span class="string"><span class="delimiter">'</span><span class="content">ws://localhost:6767/</span><span class="delimiter">'</span></span>);
   socket.<span class="function">onmessage</span> = <span class="keyword">function</span>(m){
@@ -629,10 +524,9 @@ with two sockets:</p>
 
 alice.say(<span class="string"><span class="delimiter">'</span><span class="content">hey bob</span><span class="delimiter">'</span></span>);
 bob.say(<span class="string"><span class="delimiter">'</span><span class="content">hiya there alice</span><span class="delimiter">'</span></span>); </code></pre>
-</div>
-<div class="block p beta">
+
  <p><a href="https://gist.github.com/toretore/35eb74a2cac3f214fd4b#file-websockets_handler-rb">View entire WS handler on Gist</a></p>
-</div>
+
 
       </div>
     </div>

@@ -34,19 +34,18 @@ body {
       body #menu li.current a {
         background: #000;
         color: #fff; }
-  body #content h1, body #content h2, body #content h3 {
-    font-weight: 200; }
+  body #content h1, body #content h2, body #content h3, body #content h4 {
+    font-weight: 400; }
+  body #content h2, body #content h3, body #content h4 {
+    margin: 5em 0 1em 0; }
   body #content h1 {
-    font-size: 150%;
-    margin-bottom: 2em; }
+    font-size: 160%; }
   body #content h2 {
-    font-size: 130%;
-    margin-top: 3em;
-    margin-bottom: 1em; }
+    font-size: 140%; }
   body #content h3 {
-    font-size: 110%;
-    margin-top: 2em;
-    margin-bottom: 1em; }
+    font-size: 120%; }
+  body #content h4 {
+    font-size: 100%; }
   body #content p {
     margin-top: 1em;
     margin-bottom: 1em;
