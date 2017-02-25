@@ -1,7 +1,7 @@
 ---
 title: Understanding the Elm Architecture
-date: 2017-02-24
-published: false
+date: 2017-02-26
+published: true
 ---
 
 Elm is a pure, functional language with managed effects. This means that none of your Elm code will ever
@@ -12,8 +12,8 @@ directly cause effects. Here are some useful effects:
 * Making HTTP calls
 * Getting the current time (not technically an effect, but still impure)
 
-As you can imagine, the vast majority of programs need to cause effects to be considered useful. Elm allows you
-to tell it to cause effects for you: You give it a description of the effects you'd like to cause, and
+As you can imagine, the vast majority of programs need to cause effects to be considered useful. Elm lets you
+tell it to cause effects for you: You give it a description of the effects you'd like to cause, and
 Elm does it for you. A clear separation exists: Your code, the "inside world", and everything else, the
 "outside world".
 
@@ -28,7 +28,8 @@ runtime, your code is completely isolated.
 
 The runtime starts your program by calling a single function called `main`. In a browser-based GUI application,
 this function will call one of several possible functions to initialize it. The one I will use as an example
-is `Html.program`, as it embodies the "Elm Architecture" well without getting too complex:
+is [`Html.program`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#program), as it embodies
+the "Elm Architecture" well without getting too complex:
 
 ~~~elm
 program : { init : (model, Cmd msg)
@@ -60,10 +61,9 @@ at various points in your program's lifetime
 
 
 
-Application state (the model)
---
+## Application state (the model)
 
-Your code does not explicitly maintain any state, the inside world is stateless. The runtime is responsible
+Your code does not explicitly maintain any state; the inside world is stateless. The runtime is responsible
 for maintaining state in the outside world, where this is allowed.
 
 The state is contained in a single data structure, usually with the type `Model`:
@@ -121,7 +121,7 @@ update msg model =
 ~~~
 
 Typically, `update` will pattern match on the event, the `Msg`, to see which type of event it is and then do something
-different for each event. Of course, *nothing is changed* inside `update` as it runs in the inside world where mutation
+different for each event. Of course, *no change happens* inside `update` as it runs in the inside world where mutation
 is forbidden. It will return a *new* value as part of the tuple `(Model, Cmd Msg)`. The runtime will receive this new
 `Model` across the boundary and store it as the new state in the outside world.
 
@@ -147,16 +147,16 @@ The runtime is basically an event loop, and your `update` function is the callba
 
 
 
-Rendering to the DOM (the view)
---
+## Rendering to the DOM (the view)
 
 It is not possible to interact with the DOM from the inside world. None of your Elm code can see the DOM, as it exists
-only in the outside world. As with your application state, it is the runtime that's responsible for maintaining a
-representation of your state in the DOM.
+only in the outside world. As with your application state, it is the runtime's responsibility to maintain the state
+of the DOM according to your instructions.
 
 After it calls `init`, and after each call to `update`, the runtime will call your `view` function, passing it the
-new state it's just received. `view` will then return a description of how you would like for the DOM to look, in
-the form of a `Html Msg` value.
+new state that was returned by your function. `view` will then return a description of how the DOM should look in the
+form of an [`Html Msg`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#Html). You may be familiar with
+this "virtual DOM" concept from other tools.
 
 ~~~elm
 view : Model -> Html Msg
@@ -173,7 +173,7 @@ todoItem item =
 ~~~
 
 An `Html Msg` represents a DOM node with attributes and zero or more child nodes. In the example, the list of
-`TodoItem`s is turned into a `Html Msg` tree representing this HTML:
+`TodoItem`s is turned into an `Html Msg` tree representing this HTML:
 
 ~~~html
 <ul>
@@ -193,32 +193,31 @@ This makes sure the state of the DOM always reflects the current state of the ap
 The runtime now looks more like this:
 
 ~~~javascript
-// Initialize the state by calling `init`
-var state = YourApp.init()[0];
-
 // The root node of our application's view
 var root = document.body;
 
+// Initialize the state by calling `init`
+var state = YourApp.init()[0];
+
 // Render the initial state to the DOM
-root.innerHTML = renderDOM(YourApp.view(state));
+renderDOM(root, YourApp.view(state));
 
 onEvent(function(event){
   // When an event happens, run `update` and save the new state
   state = YourApp.update(event, state)[0];
 
   // Call `view` with the new state and apply the result to the DOM
-  root.innerHTML = renderDOM(YourApp.view(state));
+  renderDOM(root, YourApp.view(state));
 });
 ~~~
 
 
 
 
-Where do events come from?
---
+## Where do events come from?
 
-Events do not come from nothing. Nothing happens unless you instruct the runtime to do something that may
-result in events happening. There are 3 sources of events:
+They don't come from nowhere. Each `Msg` that is received by your `update` ultimately originates from something
+you did. There are 3 sources of events:
 
 * DOM events
 * Commands
@@ -226,8 +225,7 @@ result in events happening. There are 3 sources of events:
 
 
 
-DOM events
----
+### DOM events
 
 In the node tree returned by your `view` function, you may include descriptions of DOM event handlers. When the
 runtime sees these it will attach the necessary handlers to the DOM.
@@ -256,11 +254,10 @@ type and call your `update` and `view` functions.
 
 
 
-Commands
----
+### Commands
 
-Commands are structures of the type `Cmd` that instruct the runtime to perform effects. A good example is making
-an HTTP call:
+Commands are structures of the type [`Cmd Msg`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Cmd#Cmd)
+that instruct the runtime to perform effects. A good example is making an HTTP call:
 
 ~~~elm
 type Msg =
@@ -273,10 +270,11 @@ fetchTodoItems =
     |> Http.send TodoItemsResponse
 ~~~
 
-Note the new event type that's been added to `Msg` and the use of `TodoItemsResponse` as an argument to `Http.send`.
-The resulting `Cmd` will include information on how to construct a `Msg` that will be passed to your `update`
-function. It is essentially a callback: You are only *describing* an effect that will happen at some point in the
-future, and when it happens the runtime will notice this and call your `update` with the result:
+Note the new event type that's been added to `Msg` and the use of `TodoItemsResponse` as an argument to
+[`Http.send`](http://package.elm-lang.org/packages/elm-lang/http/1.0.0/Http#send). The resulting `Cmd` will
+include information on how to construct a `Msg` that will be passed to your `update` function. It is essentially
+a callback: You are only *describing* an effect that will happen at some point in the future, and when it happens
+the runtime will notice this and call your `update` with the result:
 
 ~~~elm
 update msg model =
@@ -305,8 +303,8 @@ program : { init : (Model, Cmd Msg)
 
 Both `init` and `update` return a tuple of `(Model, Cmd Msg)`. Most of the time, you will simply return `Cmd.none`,
 which means "do nothing". But if you *do* want to cause an effect, this is where you must return the `Cmd`
-representing your effect. You can create as many `Cmd`s as you want in the inside world, but unless you give then
-to the runtime as a return value of these two functions, nothing happens.
+representing your effect. You can create as many `Cmd`s as you want in the inside world, but nothing will happen
+until you hand them off to the runtime by returning them from one of these functions.
 
 The following `init` sets the initial state to be an empty list and returns a `Cmd` which
 instructs the runtime to try and fetch the actual `TodoItem` list from the server:
@@ -327,17 +325,17 @@ if the response was successful.
 The pretend-runtime updated to take commands into account:
 
 ~~~javascript
+// The root node of our application's view
+var root = document.body;
+
 // Initialize the state by calling `init`
 var [state, cmd] = YourApp.init();
 
 // If a command was returned, execute it asynchronously
 if (cmd) executeCmd(cmd, function(res){ onEvent(cmd.createMsg(res)); });
 
-// The root node of our application's view
-var root = document.body;
-
 // Render the initial state to the DOM
-root.innerHTML = renderDOM(YourApp.view(state));
+renderDOM(root, YourApp.view(state));
 
 onEvent(function(event){
   // When an event happens, run `update` and save the new state
@@ -347,7 +345,7 @@ onEvent(function(event){
   if (cmd) executeCmd(cmd, function(res){ onEvent(cmd.createMsg(res)); });
 
   // Call `view` with the new state and apply the result to the DOM
-  root.innerHTML = renderDOM(YourApp.view(state));
+  renderDOM(root, YourApp.view(state));
 });
 ~~~
 
@@ -355,18 +353,17 @@ onEvent(function(event){
 
 
 
-Subscriptions
----
+### Subscriptions
 
 Subscriptions are for repeating events. Some examples are WebSocket connections that represent a stream of
 messages, or a "tick" event that occurs every second to update the inside world's time.
 
-Subscriptions are represented by the `Sub Msg` type, and there is only 1 way to tell the runtime about your
-interest in them: The `subscriptions` function executed by `Html.program`, which takes a `Model` and returns
-a `Sub Msg`.
+Subscriptions are represented by the [`Sub Msg`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Sub#Sub)
+type, and there is only 1 way to tell the runtime about your interest in them: The `subscriptions` function executed
+by `Html.program`, which takes a `Model` and returns a `Sub Msg`.
 
-A simple example is `Time.every`, which returns a `Sub Msg` that results in an event containing the current
-time every second:
+A simple example is [`Time.every`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Time#every), which
+returns a `Sub Msg` that results in an event containing the current time every second:
 
 ~~~elm
 type Msg =
@@ -387,7 +384,7 @@ The `subscriptions` function is called whenever the `Model` changes. If you're n
 programmer, this may seem weird and even dangerous to you. But as you know, this function runs in the inside
 world where everything is safe and pure: All it does is return a *description* of the repeating events you're
 interested in. The runtime will check if that description has changed since the last time and reconcile its
-internal state in the outside world if necessary.
+internal state in the outside world *if necessary*.
 
 <div class="block">
   <img src="/images/tea-7.svg"/>

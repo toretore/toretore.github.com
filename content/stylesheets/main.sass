@@ -1,19 +1,5 @@
+// NOTE Regenerate HTML files also when this changed: Filename is hash
 @import url('https://fonts.googleapis.com/css?family=Inconsolata|Open+Sans&subset=latin-ext')
-
-@function compact($list)
-  $new-list: ()
-  @each $element in $list
-    @if $element
-      $new-list: append($new-list, $element, list-separator($list))
-  @return $new-list
-
-=gradient($from, $to, $pre:null, $post:null)
-  background-color: $from
-  background-image: compact(($pre, -moz-linear-gradient(right top, $from, $to), $post))
-  background-image: compact(($pre, -webkit-linear-gradient(right top, $from, $to), $post))
-  background-image: compact(($pre, -wo-linear-gradient(right top, $from, $to), $post))
-  background-image: compact(($pre, linear-gradient(to right top, $from, $to), $post))
-
 
 *
   margin: 0
@@ -59,24 +45,23 @@ body
 
   #content
 
-    //h1, h2, h3, p, pre
+    h1, h2, h3, h4
+      font-weight: 400
 
-    h1, h2, h3
-      font-weight: 200
+    h2, h3, h4
+      margin: 5em 0 1em 0
 
     h1
-      font-size: 150%
-      margin-bottom: 2em
+      font-size: 160%
 
     h2
-      font-size: 130%
-      margin-top: 3em
-      margin-bottom: 1em
+      font-size: 140%
 
     h3
-      font-size: 110%
-      margin-top: 2em
-      margin-bottom: 1em
+      font-size: 120%
+
+    h4
+      font-size: 100%
 
     p
       margin-top: 1em

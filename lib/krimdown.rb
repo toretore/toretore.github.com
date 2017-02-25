@@ -16,7 +16,7 @@ module ZFT
       @stack.push(el)
       el.children.each do |inner_el|
         result << if el.type == :root && inner_el.type != :blank && inner_el.class.category(inner_el) == :block
-          "#{' '*indent}<div class=\"block #{inner_el.type} #{BLOCK_TYPES[rand(BLOCK_TYPES.size)]}\">\n#{send(DISPATCHER[inner_el.type], inner_el, indent+1).chomp}\n#{' '*indent}</div>"
+          "#{' '*indent}#{send(DISPATCHER[inner_el.type], inner_el, indent+1).chomp}\n#{' '*indent}"
         else
           send(DISPATCHER[inner_el.type], inner_el, indent)
         end

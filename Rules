@@ -9,7 +9,7 @@ passthrough '/fonts/**/*'
 
 compile '/stylesheets/*.sass' do
   filter :sass
-  write item.identifier.without_ext + '.css'
+  write item.identifier.without_ext + '.' + Digest::SHA1.hexdigest(item.raw_content) + '.css'
 end
 
 compile '/images/**/*' do
