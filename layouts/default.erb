@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Blag: <%= @item[:title] %></title>
+    <title><%= @item[:title] || 'Blag' %></title>
     <% for item in @items.select{|i| i.identifier.components.first == 'stylesheets' } %>
       <link rel="stylesheet" href="<%= item.identifier.without_ext %>.<%= Digest::SHA1.hexdigest(item.raw_content) %>.css">
     <% end %>
