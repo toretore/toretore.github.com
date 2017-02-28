@@ -1,5 +1,5 @@
 <ul class="articles">
-<% for item in @items.select{|i| i.identifier.to_s =~ /^\/articles\// && i[:published] }.sort{|a,b| b[:date] <=> a[:date] } %>
+<% for item in @items.select{|i| i[:published] }.sort{|a,b| b[:date] <=> a[:date] } %>
   <li>
     <a href="<%= item.identifier.without_ext %>/"><%= item[:title] %></a>
     <span class="date"><%= item[:date].strftime('%-d %b %Y') %></span>
